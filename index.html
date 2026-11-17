@@ -129,7 +129,7 @@
   .bar { position: sticky; bottom: 0; z-index: 5; background: var(--bg); border-top: 1px solid var(--rule);
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
     font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
-  .ctl { display: flex; gap: 6px; }
+  .ctl { display: flex; flex-wrap:wrap; gap: 6px; } #branches { max-width:180px; background:var(--panel); color:var(--fg); border:1px solid var(--faint); font:inherit; }
   .btn { all: unset; cursor: pointer; border: 1px solid var(--faint); padding: 3px 10px; font-family: var(--label); letter-spacing: .1em; text-transform: uppercase; font-size: 11px; color: var(--fg); }
   .btn:hover { border-color: var(--dim); }
   .btn:focus-visible { outline: 1px solid var(--steer); }
@@ -163,6 +163,30 @@
     .credit { display: none; }
   }
   @media (prefers-reduced-motion: reduce) { .toast, .stamp { transition: none; } }
+
+  .lab { padding: 30px 0; display:grid; grid-template-columns: 1fr 300px; gap: 22px 48px; border-bottom:1px solid var(--rule); }
+  h1 { font-family:var(--label); font-size: clamp(28px, 4vw, 46px); line-height:1.1; margin:10px 0; font-weight:500; }
+  .lab p { margin:8px 0; color:var(--dim); }
+  .eyebrow { font-size:10px; color:var(--steer); text-transform:uppercase; letter-spacing:.12em; }
+  .lab-control { align-self:center; } .lab-control label { display:flex; justify-content:space-between; font-size:11px; }
+  .lab-control b { color:var(--steer); } #heroSpin { width:100%; margin:20px 0 8px; accent-color:var(--steer); }
+  .ends { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); }
+  .lab-copy { grid-column:1/-1; display:grid; grid-template-columns:150px 1fr; gap:8px 20px; padding:18px 22px; border-left:2px solid var(--steer); background:var(--panel); }
+  .lab-copy p { margin:0; } .lab-copy #spinPreview { color:var(--fg); min-height:40px; font-size:16px; }
+  .dials-wrap { position:sticky; top:0; z-index:3; background:var(--bg); margin:0 0 20px; padding:12px 0; border-top:0; border-bottom:1px solid var(--rule); }
+  .dials { gap:12px; grid-template-columns:repeat(4,minmax(0,1fr)); } .dial .out { font-size:10px; }
+  .report-tools { display:flex; gap:12px; justify-content:space-between; align-items:center; margin:16px 0; color:var(--dim); font-size:10px; }
+  .pin-notice,.inspector,.comparison { padding:16px; background:var(--panel); border:1px solid var(--rule); margin:12px 0; overflow-wrap:anywhere; }
+  .pin-notice { border-color:var(--steer); color:var(--steer); font-size:12px; }
+  .inspector .btn { float:right; } .claim-source { padding:8px 0; color:var(--dim); font-size:11px; border-top:1px solid var(--rule); }
+  .comparison { max-height:260px; overflow:auto; } .k-mis { color:var(--steer); text-decoration:underline wavy; text-underline-offset:4px; }
+  [data-claim] { cursor:pointer; } [data-claim]:hover { background:#28323b; }
+  .ghost .k-mis { color:inherit; text-decoration:none; } .mark .misleading { color:var(--steer); }
+  .ln { grid-template-columns:20px 30px minmax(0,1fr) 90px; gap:8px; } .bars i { width:4px; }
+  .rail h2 span { color:var(--dim); } .doc { padding-bottom:40px; }
+  @media(max-width:860px) { .lab { grid-template-columns:1fr; } .lab-copy { grid-template-columns:1fr; } .report { grid-row:1; } .dials-wrap { top:0; } .stage { gap:24px; } .lab-control { max-width:500px; width:100%; } }
+  @media(max-width:560px) { .dials { grid-template-columns:repeat(2,minmax(0,1fr)); } .dial svg { max-height:66px; } .dials-wrap { position:relative; } .ln { grid-template-columns:18px minmax(0,1fr); } .bars,.mark { display:none; } .report-tools { flex-wrap:wrap; } .lab-copy { padding:12px; } }
+.model-controls { border:1px solid var(--rule); padding:12px; margin:12px 0; font-size:11px; } .model-controls label { color:var(--steer); } #modelStatus { display:block; margin-top:6px; color:var(--dim); } .model-controls p { color:var(--dim); margin-bottom:0; } .k-ai { color:#b5b6ff; text-decoration:underline dotted; text-underline-offset:4px; } .mark .ai-label { color:#b5b6ff; }
 </style>
 </head>
 <body>
@@ -174,17 +198,27 @@
     <div class="stamp" id="stamp">approved by legal</div>
   </header>
 
+  <section class="lab" aria-label="Spin laboratory">
+    <div><span class="eyebrow">01 / Spin laboratory · fictional incident</span><h1>Same breach. Different story.</h1><p>Turn up the spin. The evidence stays put.</p></div>
+    <div class="lab-control"><label for="heroSpin">SPIN <b id="spinLabel">candid</b></label><input id="heroSpin" type="range" min="0" max="3" step="1" value="0"><div class="ends"><span>candid</span><span>very seriously</span></div></div>
+    <div class="lab-copy"><span class="eyebrow">What happened</span><p>Our VPN had no MFA. 41.2 GB left the network.</p><span class="eyebrow">How we’re saying it</span><p id="spinPreview"></p></div>
+  </section>
   <main class="stage" id="stage">
     <section class="rail" aria-label="Evidence">
       <h2>evidence <span>click a line to pin it</span></h2>
       <ol class="ev-list" id="evList"></ol>
     </section>
     <section class="report" aria-label="Statement">
-      <div class="doc" id="doc" aria-live="off"></div>
+
       <div class="dials-wrap">
-        <div class="dials-cap">steering <span>drag an arc to change everything not yet written</span></div>
+        <div class="dials-cap">02 / Steer the statement <span>changes apply after the current sentence</span></div>
         <div class="dials" id="dials"></div>
       </div>
+      <div id="pinNotice" class="pin-notice" role="status" hidden></div>
+      <div class="model-controls"><label><input id="useModel" type="checkbox" disabled> Write with local Mistral</label><span id="modelStatus" role="status">Checking local model…</span><p>Mistral checks each generated claim against the logs. Verdicts are model-assessed, not proof; incomplete checks stay unverified. Pinned admissions stay scripted.</p></div><div class="report-tools"><span>Click an underlined word to inspect its claim.</span><button class="btn" id="compare">compare with candid</button></div>
+      <div id="comparison" class="comparison" hidden></div>
+      <div class="inspector" id="inspector" hidden><button class="btn" id="closeInspector">back to live</button><div id="claimDetail"></div></div>
+      <div class="doc" id="doc" aria-live="off"></div>
     </section>
     <svg id="threads" aria-hidden="true"></svg>
   </main>
@@ -192,7 +226,7 @@
   <footer class="bar">
     <div class="ctl">
       <button class="btn" id="play" type="button">pause</button>
-      <button class="btn" id="redraft" type="button">redraft</button>
+      <button class="btn" id="redraft" type="button">redraft</button><button class="btn" id="saveDraft" type="button">save branch</button><select id="branches" aria-label="Restore saved branch"><option value="">saved branches</option></select>
     </div>
     <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Timeline: drag back to rewrite from there">
     <div class="tm" id="tm"></div>
@@ -210,12 +244,16 @@
   const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
   const RATE = 7;              // words per second shown to the reader
-  const settings = { spin: 0.55, attacker: 0.4, blame: 0.35, legal: 0.3 };
+  const settings = { spin: 0, attacker: 0, blame: 0, legal: 0 };
   const pins = new Set();
   const tags = [];             // dial changes docked at the word where they took effect
   const sentWords = new Map(); // sid -> words of that sentence
   const attention = Object.fromEntries(E.EVIDENCE.map((e) => [e.id, 0]));
 
+  const branches = [];
+  let modelEnabled = false, modelBusy = null, modelEpoch = 0, modelTimer;
+  const modelAttempted = new Set();
+  let selectedClaim = null;
   let committed = [];          // frozen: never rewritten
   let plan = [];               // speculated future under current settings
   let spec = 0;                // how much of plan is speculated so far
@@ -232,6 +270,7 @@
   }
 
   function replan(invalidate) {
+    cancelModel();
     const last = committed[committed.length - 1];
     let remainder = [], from = 0;
     if (last) {
@@ -243,14 +282,16 @@
     const fresh = E.toWords(E.generate(settings, pins, from, cited));
     register(fresh);
     plan = remainder.concat(fresh);
+    scheduleModel();
     spec = Math.min(spec, remainder.length);  // drop speculated text past the sentence in flight
-    latency = invalidate ? 0.3 + Math.random() * 0.25 : 0.1 + Math.random() * 0.1;
+    latency = 0;
     latencyMs = Math.round(latency * 1000);
     dirty = true;
   }
 
   function emit(n) {
     for (let i = 0; i < n && plan.length; i++) {
+      if (modelEnabled && (modelBusy?.sid === plan[0].sid || (modelTimer && plan[0].wi === 0 && !plan[0].admit && !modelAttempted.has(plan[0].sid)))) break;
       committed.push(plan.shift());
       spec = Math.max(0, spec - 1);
     }
@@ -260,7 +301,7 @@
   function bumpDraft() { draft++; $('#draftNo').textContent = 'v' + draft; }
 
   function redraftFromTop(msg) {
-    committed = []; tags.length = 0; doneToasted = false;
+    selectedClaim = null; $('#inspector').hidden = true; committed = []; tags.length = 0; doneToasted = false;
     replan(true); bumpDraft();
     if (msg) toast(msg);
   }
@@ -284,6 +325,9 @@
     const btn = li.firstElementChild;
     btn.addEventListener('click', () => {
       const on = !pins.has(e.id);
+      selectedClaim = null; $('#inspector').hidden = true;
+      $('#pinNotice').hidden = !on;
+      $('#pinNotice').textContent = on ? `Evidence locked · ${e.text} — the statement must acknowledge this, even at maximum spin.` : '';
       on ? pins.add(e.id) : pins.delete(e.id);
       btn.classList.toggle('pinned', on);
       btn.setAttribute('aria-pressed', String(on));
@@ -365,6 +409,7 @@
     ui.svg.setAttribute('aria-valuenow', String(Math.round(v * 100)));
     ui.svg.setAttribute('aria-valuetext', `${E.stopLabel(key, v)}, ${Math.round(v * 100)}%`);
     ui.out.innerHTML = `${esc(label(key))}: <b>${esc(E.stopLabel(key, v))}</b> <i>${Math.round(v * 100)}%</i>`;
+    if (key === 'spin') updateLab();
     if (key === 'legal') $('#stamp').classList.toggle('on', E.level(v) >= 2);
   }
 
@@ -401,7 +446,7 @@
     return lines;
   }
 
-  const kind = (g) => !g.claim ? '' : g.contra.length ? 'k-con' : g.cites.length ? 'k-sup' : 'k-uns';
+  const kind = (g) => ({ plain: '', supported: 'k-sup', contradicted: 'k-con', unsupported: 'k-uns', misleading: 'k-mis', unverified: 'k-ai' })[E.classify(g)];
 
   function render() {
     const lines = layout();
@@ -409,20 +454,26 @@
     const tagAt = new Map();
     tags.forEach((t) => { const k = Math.max(0, t.at - 1); (tagAt.get(k) || tagAt.set(k, []).get(k)).push(t); });
     let html = '', no = 0;
+    const renderedClaims = new Set();
     for (const line of lines) {
       if (line.blank) { html += '<div class="ln blank"></div>'; continue; }
       no++;
       const sup = new Set(), bad = new Set();
-      let con = false, uns = false, lineTags = [];
+      let con = false, uns = false, ai = false, assessed = false, mis = false, lineTags = [];
       const parts = line.items.map(({ w, i, ghost }) => {
         const inner = w.segs.map((g) => {
           const k = kind(g);
           if (!ghost) {
+            if (g.assessment === 'model') assessed = true;
             if (k === 'k-sup') g.cites.forEach((id) => sup.add(id));
             if (k === 'k-con') { con = true; bad.add(g.contra); }
+            if (k === 'k-ai') ai = true;
+            if (k === 'k-mis') { mis = true; g.cites.forEach((id) => sup.add(id)); }
             if (k === 'k-uns') { uns = true; bad.add(g.cites); }
           }
-          return k ? `<span class="${k}">${esc(g.t)}</span>` : esc(g.t);
+          const firstClaim = !ghost && g.claim && !renderedClaims.has(g.claimId);
+          if (!ghost && g.claim) renderedClaims.add(g.claimId);
+          return k ? `<span class="${k}" ${!ghost ? `${firstClaim ? 'role="button" tabindex="0"' : ''} data-claim="${g.claimId}" ${firstClaim ? `aria-label="Inspect claim: ${esc(g.fullText)}"` : ''}` : ""}>${esc(g.t)}</span>` : esc(g.t);
         }).join('');
         if (!ghost && tagAt.has(i)) lineTags = lineTags.concat(tagAt.get(i));
         const first = w.segs[0], last = w.segs[w.segs.length - 1];
@@ -440,10 +491,10 @@
       if (lastIdx < 0 && no === 1) lineTags = [];
       const s = Math.min(5, sup.size), b = Math.min(5 - s, bad.size);
       const bars = '<i class="s"></i>'.repeat(s) + '<i class="b"></i>'.repeat(b) + '<i></i>'.repeat(5 - s - b);
-      const mark = con ? '<em>contradicted</em>' : uns ? '<em>unsupported</em>' : '';
+      const mark = ai ? '<em class=ai-label>unverified · AI</em>' : con ? '<em>contradicted</em>' : uns ? '<em>unsupported</em>' : mis ? '<em class=misleading>misleading</em>' : '';
       const tagHtml = lineTags.map((t) => `<span class="tag">${esc(t.text)}</span>`).join('');
       const retStart = lastIdx < 0 && no === 1 ? '<span class="ret" id="ret"></span>' : '';
-      html += `<div class="ln"><span class="no">${no}</span><span class="bars">${bars}</span><span class="txt">${retStart}${words}</span><span class="mark">${mark}${tagHtml}</span></div>`;
+      html += `<div class="ln"><span class="no">${no}</span><span class="bars">${bars}</span><span class="txt">${retStart}${words}</span><span class="mark">${mark}${assessed ? '<span class="ai-label">model-assessed</span>' : ''}${tagHtml}</span></div>`;
     }
     $('#doc').innerHTML = html;
     const scrub = $('#scrub');
@@ -457,6 +508,12 @@
   function currentClaims() {
     const last = committed[committed.length - 1];
     const sup = new Set(), con = new Set(), uns = new Set();
+    if (selectedClaim) {
+      selectedClaim.contra.forEach(id => con.add(id));
+      if (!con.size) selectedClaim.cites.forEach(id => sup.add(id));
+      if (!con.size && !sup.size) uns.add(selectedClaim.claimId);
+      return { sup, con, uns };
+    }
     if (!last) return { sup, con, uns };
     for (let i = committed.length - 1; i >= 0 && committed[i].sid === last.sid; i--) {
       for (const g of committed[i].segs) {
@@ -471,7 +528,7 @@
   }
 
   function drawThreads() {
-    const svg = $('#threads'), stage = $('#stage'), ret = $('#ret');
+    const svg = $('#threads'), stage = $('#stage'), ret = selectedClaim ? document.querySelector(`[data-claim="${selectedClaim.claimId}"]`) : $('#ret');
     const st = stage.getBoundingClientRect();
     svg.setAttribute('viewBox', `0 0 ${st.width.toFixed(0)} ${st.height.toFixed(0)}`);
     const { sup, con, uns } = currentClaims();
@@ -507,23 +564,23 @@
   // ---------- telemetry ----------
   function telemetry() {
     const seen = new Set();
-    let s = 0, u = 0, c = 0;
+    let s = 0, u = 0, c = 0, m = 0, ai = 0;
     for (const w of committed) for (const g of w.segs) {
-      if (!g.claim || seen.has(g.cites)) continue;
-      seen.add(g.cites);
-      if (g.contra.length) c++; else if (g.cites.length) s++; else u++;
+      if (!g.claim || seen.has(g.claimId)) continue;
+      seen.add(g.claimId);
+      if (g.unverified) ai++; else if (g.contra.length) c++; else if (g.misleading) m++; else if (g.cites.length) s++; else u++;
     }
-    const total = s + u + c;
+    const total = s + u + c + m + ai;
     const cred = total ? Math.round((s / total) * 100) : 100;
     $('#tm').innerHTML = [
-      `» <b>${wps ? Math.round(wps) : '—'}</b> w/s`,
-      `▾ <b>${latencyMs}</b>ms`,
+      modelEnabled ? `local Mistral · ${ai} unverified` : `scripted engine · ${ai} unverified`,
+      `misleading <b>${m}</b>`,
       `¶ <b>${committed.length}›${Math.floor(spec)}</b>`,
       `pin <b>${pins.size}</b>`,
       `steer <b>${steer}</b>`,
       `<span class="red">unsupported <b>${u}</b></span>`,
       `<span class="red">contradicted <b>${c}</b></span>`,
-      `credibility <b>${cred}%</b>`,
+      `supported claims <b>${cred}%</b>`,
     ].map((x) => `<span>${x}</span>`).join('');
   }
 
@@ -546,9 +603,35 @@
     ev.preventDefault(); setPlaying(!playing);
   });
 
+  function saveBranch() {
+    if (!committed.length) return;
+    branches.push({ committed: [...committed], plan: [...plan], settings: {...settings}, pins: [...pins], modelEnabled, tags: tags.map(t => ({...t})), draft });
+    const option = document.createElement('option'); option.value = branches.length - 1;
+    option.textContent = `v${draft} · ${E.stopLabel('spin', settings.spin)} · ${committed.length} words`;
+    $('#branches').appendChild(option);
+    toast('Branch saved for this session. Restore it from saved branches.');
+  }
+  $('#saveDraft').addEventListener('click', saveBranch);
+  $('#branches').addEventListener('change', () => {
+    if ($('#branches').value === '') return;
+    cancelModel();
+    const branch = branches[Number($('#branches').value)];
+    modelEnabled = branch.modelEnabled; $('#useModel').checked = modelEnabled;
+    $('#modelStatus').textContent = modelEnabled ? 'Local Mistral · branch restored' : 'Scripted mode';
+    committed = [...branch.committed]; plan = [...branch.plan]; spec = plan.length;
+    Object.assign(settings, branch.settings); pins.clear(); branch.pins.forEach(id => pins.add(id));
+    tags.splice(0, tags.length, ...branch.tags.map(t => ({...t})));
+    E.DIALS.forEach(d => drawDial(d.key));
+    Object.entries(evEls).forEach(([id, el]) => { el.btn.classList.toggle('pinned', pins.has(id)); el.btn.setAttribute('aria-pressed', String(pins.has(id))); });
+    selectedClaim = null; $('#inspector').hidden = true; $('#pinNotice').hidden = true;
+    doneToasted = false; acc = 0; setPlaying(false); bumpDraft(); dirty = true;
+    $('#branches').value = '';
+    toast('Branch restored and paused. Press play to continue.');
+  });
   const scrub = $('#scrub');
   scrub.addEventListener('pointerdown', () => { scrubbing = true; });
   scrub.addEventListener('input', () => {
+    selectedClaim = null; $('#inspector').hidden = true;
     const v = +scrub.value;
     if (v < committed.length) {
       committed = committed.slice(0, v);
@@ -585,6 +668,7 @@
       toast('Statement published. Drag the timeline back, or turn a dial to redraft.');
     }
 
+    if (modelEnabled && !modelBusy && !modelTimer) scheduleModel();
     const { sup, con } = currentClaims();
     for (const id in attention) {
       const hot = sup.has(id) || con.has(id);
@@ -596,11 +680,103 @@
     requestAnimationFrame(frame);
   }
 
+  function cancelModel() {
+    modelEpoch++; clearTimeout(modelTimer); modelTimer = null;
+    modelBusy?.controller.abort(); modelBusy = null;
+  }
+  function scheduleModel() {
+    if (!modelEnabled || modelBusy || modelTimer) return;
+    modelTimer = setTimeout(() => { modelTimer = null; generateNext(); }, 200);
+  }
+  async function generateNext() {
+    if (!modelEnabled || modelBusy) return;
+    const currentSid = committed.at(-1)?.sid;
+    const target = plan.find(w => w.sid !== currentSid && !w.admit);
+    if (!target || modelAttempted.has(target.sid)) return;
+    const source = plan.filter(w => w.sid === target.sid);
+    const epoch = modelEpoch, controller = new AbortController();
+    modelBusy = {sid:target.sid, controller}; modelAttempted.add(target.sid);
+    $('#modelStatus').textContent = 'Mistral is drafting and checking evidence…';
+    const timeout = setTimeout(() => controller.abort(), 45000);
+    try {
+      const response = await fetch('/api/draft', {method:'POST', headers:{'Content-Type':'application/json'}, signal:controller.signal,
+        body:JSON.stringify({text:source.map(w=>w.t).join(' '),prefix:committed.map(w=>w.t).join(' ').slice(-12000),settings:{...settings},pins:[...pins]})});
+      if (response.status === 422) {
+        // The server refused this draft (an unbacked fix, or not one sentence). Keep the scripted line; Mistral stays on.
+        const why = await response.json().catch(() => ({}));
+        if (epoch === modelEpoch) $('#modelStatus').textContent = why.fixes?.length ? `Mistral claimed a fix the logs don't show (${why.fixes.join(', ')}). Kept the scripted sentence.` : 'Mistral\u2019s draft wasn\u2019t one clean sentence. Kept the scripted sentence.';
+        return;
+      }
+      if (!response.ok) throw new Error('Generation unavailable');
+      const result = await response.json();
+      if (typeof result.text !== 'string' || !result.text.trim() || result.text.length > 1600) throw new Error('Invalid output');
+      if (epoch !== modelEpoch || committed.some(w=>w.sid===target.sid)) return;
+      const start = plan.findIndex(w=>w.sid===target.sid);
+      if (start < 0) return;
+      const words = E.toWords([{beat:target.beat, para:target.para, head:target.head, parts: Array.isArray(result.parts) && result.parts.map(p=>p.text).join('') === result.text ? result.parts : [{text:result.text,claim:true,cites:[],contra:[],unverified:true}]}]);
+      register(words); modelAttempted.add(words[0].sid);
+      plan.splice(start,source.length,...words); spec = plan.length; dirty = true;
+      $('#modelStatus').textContent = 'Local Mistral · next sentence ready (inspect claims for evidence)';
+    } catch {
+      if (epoch === modelEpoch) $('#modelStatus').textContent = 'Model unavailable — using scripted fallback. Toggle Mistral to retry.';
+      if (epoch === modelEpoch) { modelEnabled = false; $('#useModel').checked = false; }
+    } finally {
+      clearTimeout(timeout);
+      if (epoch === modelEpoch) modelBusy = null;
+    }
+  }
+  $('#useModel').addEventListener('change', () => {
+    modelEnabled = $('#useModel').checked;
+    replan(false);
+    $('#modelStatus').textContent = modelEnabled ? 'Local Mistral enabled · preparing next sentence' : 'Scripted mode';
+  });
+  fetch('/api/model').then(r => r.ok ? r.json() : Promise.reject()).then(data => {
+    $('#useModel').disabled = !data.available;
+    $('#modelStatus').textContent = data.available ? `${data.model} ready on this device` : 'Mistral is not installed in the local service.';
+  }).catch(() => { $('#modelStatus').textContent = 'For local Mistral, run npm run serve:model and open port 8766.'; });
+
+  function updateLab() {
+    const level = E.level(settings.spin);
+    $('#heroSpin').value = level;
+    $('#spinLabel').textContent = E.stopLabel('spin', settings.spin);
+    $('#spinPreview').textContent = [
+      'Our VPN had no MFA. 41.2 GB left the network.',
+      'An incident involving a remote-access account resulted in approximately 41 GB of data being transferred.',
+      'A limited amount of information may have been accessed. We are strengthening our security posture.',
+      'Our robust controls encountered an exceptional situation. Your security remains our highest priority.'
+    ][level];
+  }
+  $('#heroSpin').addEventListener('input', () => {
+    settings.spin = Number($('#heroSpin').value) / 3;
+    drawDial('spin'); replan(false);
+  });
+  $('#heroSpin').addEventListener('change', () => commitSteer('spin'));
+  function inspectClaim(event) {
+    const target = event.target.closest('[data-claim]');
+    if (!target) return;
+    selectedClaim = committed.flatMap(w => w.segs).find(g => g.claimId === target.dataset.claim);
+    if (!selectedClaim) return;
+    setPlaying(false);
+    const g = selectedClaim, status = E.classify(g);
+    const reason = g.reason || ({supported: 'The cited logs support this claim.', contradicted: 'The scenario evidence conflicts with this claim.', unverified: 'Written by local Mistral. This wording has not been checked against the evidence and is not counted as supported.', unsupported: 'These logs do not establish this claim. That does not prove it false.'})[status];
+    const ids = [...new Set([...g.cites, ...g.contra])];
+    $('#claimDetail').innerHTML = `<span class="eyebrow">${status} · ${g.assessment === 'model' ? 'model-assessed' : g.assessment === 'scripted' ? 'scripted annotation' : 'check incomplete'}</span><p>“${esc(g.fullText)}”</p><p>${esc(reason)}</p>` + ids.map(id => { const e = E.EVIDENCE.find(e => e.id === id); return `<div class="claim-source"><b>${esc(e.src)}</b><br>${esc(e.text)}${(g.evidenceQuotes || []).filter(q=>q.id===id).map(q=>`<p>Quoted evidence: “${esc(q.quote)}”</p>`).join('')}</div>`; }).join('');
+    $('#inspector').hidden = false; drawThreads();
+  }
+  $('#doc').addEventListener('click', inspectClaim);
+  $('#doc').addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inspectClaim(event); } });
+  $('#closeInspector').addEventListener('click', () => { selectedClaim = null; $('#inspector').hidden = true; setPlaying(true); dirty = true; });
+  $('#compare').addEventListener('click', () => {
+    const panel = $('#comparison'); panel.hidden = !panel.hidden;
+    $('#compare').textContent = panel.hidden ? 'compare with candid' : 'hide candid version';
+    if (!panel.hidden) panel.innerHTML = '<span class="eyebrow">Candid baseline · same evidence</span>' + E.generate({spin:0, attacker:0, blame:0, legal:0}).map(s => `<p>${esc(s.parts.map(p => p.text).join(''))}</p>`).join('');
+  });
+
   // ---------- boot: open on a half-written draft so the first view already shows the idea ----------
   measure();
   replan(false);
   spec = plan.length;
-  emit(22);
+  emit(9);
   latency = 0;
   window.addEventListener('resize', () => { measure(); render(); });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); render(); });
