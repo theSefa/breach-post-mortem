@@ -2,6 +2,12 @@
 
 A plain-English walkthrough of the whole thing, from the evidence to the threads on screen.
 
+## Interaction update
+
+The page now opens with an instant, four-stop spin laboratory and a candid statement. Claim inspection pauses generation and shows the source records. A candid comparison and session-only saved branches support replay. Desktop steering controls stick above the statement; phone layout puts the statement first.
+
+Claims also support `misleading` and an explanatory `reason`. `classify()` distinguishes supported, contradicted, unsupported, and misleading claims. Stable claim IDs survive tokenization and are used for inspection and counting. A file count does not establish affected customer count; residential infrastructure does not disprove nation-state involvement.
+
 ## The big idea
 
 A real breach notice is written backwards: the conclusion ("we take your security very seriously") is decided first, and the facts are fitted around it. This app makes that visible. Every claim the statement makes is linked to the evidence behind it, so when you turn up the spin you can *see* the claims come loose from the facts.
@@ -95,7 +101,7 @@ Click a log line to pin it. If the statement hasn't already cited that evidence 
 - **Threads**: SVG curves from the writing cursor to the log lines behind the current sentence. White means supported, red means contradicted, and a red ╳ means nothing backs the claim.
 - **Gutter bars** next to each line: how much of that line rests on evidence.
 - **Evidence attention bars**: under each log line, they fill while the statement is leaning on it and fade when it moves on.
-- **Telemetry bar**: words per second, simulated latency, committed›speculated words, pins, steers, unsupported and contradicted counts, and **credibility** (supported claims ÷ all claims).
+- **Telemetry bar**: the scripted-engine label, misleading/unsupported/contradicted counts, committed›speculated words, pins, steers, and **supported claims** (supported claims ÷ all claims).
 - **Timeline**: drag it back to rewind (and drop any steering tags after that point), or forward to fast-forward.
 
 ## Talking points
@@ -103,3 +109,15 @@ Click a log line to pin it. If the statement hasn't already cited that evidence 
 - "It's a breach notice that writes itself from the logs. Every claim is wired to the evidence behind it, so when you turn up the spin you can watch the claims lose their evidence."
 - "There's no AI inside. It's a scripted engine, so it's instant and does the same thing for everyone. The point is the interface: steering text in real time while it's being written."
 - "The steering UI is inspired by far___behind's real-time LLM steering work. I pointed it at something every security person has read too many of."
+
+## Local model adapter
+
+`server.js` exposes `/api/model` and `/api/draft` on port 8766, forwarding validated scenario requests to the installed Ollama model. The page requests schema-constrained JSON containing a short replacement paragraph. It emits the validated text with new claim IDs and `unverified: true`; no generated citation is accepted as proof. Text is escaped by the existing renderer.
+
+Each replan advances a request epoch and aborts pending fetches. Results must match the current epoch and an uncommitted sentence before replacement. The emission loop waits at an in-progress target sentence and otherwise retains its normal pacing. Pinned admission beats bypass the model. Restoring a branch cancels the previous request. Unavailability, malformed output, and timeouts retain scripted text and disable model mode until retried.
+
+## Evidence review of generated text
+
+After generation, `verifier.js` uses a separate zero-temperature Mistral request for each sentence (up to six). The reviewer sees the fixed logs and the target sentence, not the writer's steering instructions. Exact sentence boundaries are chosen by code, so the reviewer cannot substitute or omit text. Compound sentences receive a single conservative verdict rather than pretending to resolve every clause independently.
+
+Supported, contradicted and misleading verdicts require valid record IDs and literal quotations found in those records. Unsupported verdicts have no supporting evidence. Bad IDs, invented quotations, malformed output, uncertainty and timeouts remain unverified. Quote validation establishes that a source exists; semantic entailment is still a model judgment. The UI displays “model-assessed” and exposes the explanation and quotations alongside the original records. Existing evidence threads use the resulting cite/contradiction links.

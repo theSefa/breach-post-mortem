@@ -30,6 +30,8 @@
   // ---- part builders --------------------------------------------------------
   const t = (text) => ({ text, cites: [], contra: [], claim: false });
   const c = (text, cites = [], contra = []) => ({ text, cites, contra, claim: true });
+  const m = (text, cites, reason) => ({ ...c(text, cites), misleading: true, reason });
+  const classify = (p) => !p.claim ? 'plain' : p.unverified ? 'unverified' : p.contra.length ? 'contradicted' : p.misleading ? 'misleading' : p.cites.length ? 'supported' : 'unsupported';
   const h = (forms) => (x) => t(forms[Math.min(x.legal, forms.length - 1)]);
   const pick = (x, opts) => opts[x.spin];
 
@@ -43,9 +45,9 @@
 
   const ACTOR = (x) => [
     c('someone holding a password that was already public', ['combo', 'login']),
-    c('an opportunistic attacker', ['login']),
+    c('an opportunistic attacker'),
     c('an advanced threat actor'),
-    c('a highly sophisticated, likely state-sponsored adversary', [], ['login', 'combo']),
+    c('a highly sophisticated, likely state-sponsored adversary'),
   ][x.attacker];
 
   const BLAME = (x) => [
@@ -95,34 +97,34 @@
       ['Our monitoring ', c('flagged it as low severity and auto-closed the alert', ['alert']), ', because ',
         c('our exfiltration threshold was 500 GB', ['threshold']), '.'],
       ['An automated alert ', c('was generated', ['alert']), ' and ', c('is under review', [], ['alert']), '.'],
-      ['Our detection systems ', c('worked as designed', ['alert', 'threshold']), '.'],
-      ['Our ', c('state-of-the-art detection systems', [], ['alert', 'threshold']), ' ', c('worked exactly as designed', ['alert', 'threshold']), '.'],
+      ['Our detection systems ', m('worked as designed', ['alert', 'threshold'], 'The alert auto-closed and the threshold was 500 GB. Following those settings does not mean the detection was effective.'), '.'],
+      ['Our ', c('state-of-the-art detection systems', [], ['alert', 'threshold']), ' ', m('worked exactly as designed', ['alert', 'threshold'], 'The configured behavior allowed the transfer to go unaddressed. This wording omits that failure.'), '.'],
     ]) }),
     (x) => ({ parts: pick(x, [
-      ['We found out on March 13, ', c('when a customer tweeted a photo of their statement', ['tweet']), '.'],
+      ['We found out on March 13, ', c('when a customer reported their statement was on a forum', ['tweet']), '.'],
       ['We became aware of the incident on ', c('March 13', ['tweet']), '.'],
-      ['Upon discovery, we ', c('promptly', [], ['tweet']), ' engaged ', c('leading forensic experts'), '.'],
-      ['Upon discovery, we ', c('immediately', [], ['tweet']), ' engaged ', c('world-class forensic experts'), ' and ',
+      ['Upon discovery, we ', c('promptly'), ' engaged ', c('leading forensic experts'), '.'],
+      ['Upon discovery, we ', c('immediately'), ' engaged ', c('world-class forensic experts'), ' and ',
         c('notified the appropriate authorities'), '.'],
     ]) }),
     (x) => ({ para: true, parts: [
       'Our investigation indicates the activity was carried out by ', ACTOR, '.',
       x.attacker === 0 ? [' ', c('Anyone with that password could have done this', ['combo']), '.'] : null,
-      x.attacker === 3 ? [' ', c('The activity is consistent with known nation-state tradecraft', [], ['login']), '.'] : null,
+      x.attacker === 3 ? [' ', c('The activity is consistent with known nation-state tradecraft'), '.'] : null,
     ] }),
     (x) => ({ parts: x.spin < 2
       ? ['The root cause was traced to ', BLAME, '.']
       : ['This incident ', c('originated outside our organization', [], ['onboard']), ', with ', BLAME, '.'] }),
     (x) => ({ para: true, parts: pick(x, [
-      ['Names, account numbers and statements for ', c('about 212,000 customers', ['exfil']), ' are now out there.'],
+      ['The transfer contained ', c('212,118 files', ['exfil']), '. These logs do not establish how many customers were affected.'],
       ['Affected information ', h(['includes', 'may include', 'may potentially include', 'may, depending on the circumstances, potentially include']), ' ',
-        c('names and account details', ['exfil']), '.'],
+        c('names and account details'), '.'],
       ['At this time, there is ', c('no evidence that any information has been misused', [], ['tweet']), '.'],
       ['There is ', c('no evidence that any information has been misused', [], ['tweet']), ', and ',
         c('no action is required on your part', [], ['tweet', 'exfil']), '.'],
     ]) }),
     (x) => ({ parts: pick(x, [
-      ['We are turning on MFA for every VPN account this week, ', c('which we had planned to do in Q3', ['mfa']), '.'],
+      ['Our policy left MFA ', c('disabled, with a TODO to enable it after Q3', ['mfa']), '.'],
       ['We are ', c('strengthening our security posture'), '.'],
       ['We have ', c('further enhanced our safeguards'), '.'],
       ['We have ', c('further enhanced our already industry-leading safeguards', [], ['mfa', 'threshold']), '.'],
@@ -194,13 +196,13 @@
       const sid = ++sidSeq;
       const sw = [];
       let cur = null;
-      for (const p of s.parts) {
+      for (const [pi, p] of s.parts.entries()) {
         const chunks = p.text.split(/( +)/);
         for (const ch of chunks) {
           if (!ch) continue;
           if (/^ +$/.test(ch)) { cur = null; continue; }
           if (!cur) { cur = { segs: [] }; sw.push(cur); }
-          cur.segs.push({ t: ch, claim: p.claim, cites: p.cites, contra: p.contra });
+          cur.segs.push({ t: ch, claim: p.claim, cites: p.cites, contra: p.contra, assessment: p.assessment || 'scripted', evidenceQuotes: p.evidenceQuotes || [], unverified: !!p.unverified, misleading: !!p.misleading, reason: p.reason || '', claimId: `${sid}:${pi}`, fullText: p.text });
         }
       }
       sw.forEach((w, wi) => {
@@ -216,7 +218,7 @@
     return words;
   }
 
-  const api = { EVIDENCE, DIALS, stopLabel, level: lvl, generate, toWords, BEAT_COUNT: BEATS.length };
+  const api = { classify, EVIDENCE, DIALS, stopLabel, level: lvl, generate, toWords, BEAT_COUNT: BEATS.length };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.BreachEngine = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -75,3 +75,36 @@ test('admissions never precede the headline', () => {
   assert.strictEqual(sents[1].admit, 'ceo');
   assert.strictEqual(Math.floor(sents[1].beat) + 1, 1);
 });
+
+test('nation-state attribution is unsupported rather than disproven by residential infrastructure', () => {
+  const parts = all(E.generate(S({ attacker: 1 })));
+  const attribution = parts.filter(p => /state-sponsored|nation-state tradecraft/.test(p.text));
+  assert.ok(attribution.length);
+  assert.ok(attribution.every(p => E.classify(p) === 'unsupported'));
+});
+
+test('working as designed is misleading and retains supporting evidence and explanation', () => {
+  const claim = all(E.generate(S({ spin: 1 }))).find(p => /worked exactly as designed/.test(p.text));
+  assert.strictEqual(E.classify(claim), 'misleading');
+  assert.ok(claim.reason && claim.cites.includes('alert'));
+  const words = E.toWords(E.generate(S({ spin: 1 })));
+  assert.ok(words.some(w => w.segs.some(g => E.classify(g) === 'misleading' && g.reason)));
+});
+
+test('file count is not represented as a verified customer count', () => {
+  const candid = text(E.generate(S({ spin: 0 })));
+  assert.match(candid, /212,118 files/);
+  assert.doesNotMatch(candid, /212,000 customers/);
+});
+
+test('claim identity survives tokenization and is distinct for repeated claims', () => {
+  const words = E.toWords(E.generate(S()));
+  const claims = words.flatMap(w => w.segs).filter(g => g.claim);
+  const byId = new Map();
+  for (const g of claims) {
+    assert.ok(g.claimId && g.fullText);
+    if (byId.has(g.claimId)) assert.strictEqual(byId.get(g.claimId), g.fullText);
+    byId.set(g.claimId, g.fullText);
+  }
+  assert.ok(byId.size > 10);
+});
