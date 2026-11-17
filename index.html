@@ -186,7 +186,7 @@
   .rail h2 span { color:var(--dim); } .doc { padding-bottom:40px; }
   @media(max-width:860px) { .lab { grid-template-columns:1fr; } .lab-copy { grid-template-columns:1fr; } .report { grid-row:1; } .dials-wrap { top:0; } .stage { gap:24px; } .lab-control { max-width:500px; width:100%; } }
   @media(max-width:560px) { .dials { grid-template-columns:repeat(2,minmax(0,1fr)); } .dial svg { max-height:66px; } .dials-wrap { position:relative; } .ln { grid-template-columns:18px minmax(0,1fr); } .bars,.mark { display:none; } .report-tools { flex-wrap:wrap; } .lab-copy { padding:12px; } }
-.model-controls { border:1px solid var(--rule); padding:12px; margin:12px 0; font-size:11px; } .model-controls label { color:var(--steer); } #modelStatus { display:block; margin-top:6px; color:var(--dim); } .model-controls p { color:var(--dim); margin-bottom:0; } .k-ai { color:#b5b6ff; text-decoration:underline dotted; text-underline-offset:4px; } .mark .ai-label { color:#b5b6ff; }
+.model-controls { border:1px solid var(--rule); padding:12px; margin:12px 0; font-size:11px; } .model-controls label { color:var(--steer); } #modelStatus { display:block; margin-top:6px; color:var(--dim); } #modelStatus a { color:var(--steer); } .model-controls p { color:var(--dim); margin-bottom:0; } .k-ai { color:#b5b6ff; text-decoration:underline dotted; text-underline-offset:4px; } .mark .ai-label { color:#b5b6ff; }
 </style>
 </head>
 <body>
@@ -733,7 +733,10 @@
   fetch('/api/model').then(r => r.ok ? r.json() : Promise.reject()).then(data => {
     $('#useModel').disabled = !data.available;
     $('#modelStatus').textContent = data.available ? `${data.model} ready on this device` : 'Mistral is not installed in the local service.';
-  }).catch(() => { $('#modelStatus').textContent = 'For local Mistral, run npm run serve:model and open port 8766.'; });
+  }).catch(() => {
+    // No local server (e.g. GitHub Pages): say plainly why the toggle is off and where to get it.
+    $('#modelStatus').innerHTML = 'Mistral mode runs on your own machine, so it\u2019s off on this site. <a href="https://github.com/theSefa/breach-post-mortem#optional-local-mistral-mode" target="_blank" rel="noopener">How to run it \u2192</a>';
+  });
 
   function updateLab() {
     const level = E.level(settings.spin);
