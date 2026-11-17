@@ -61,7 +61,7 @@ Brightwell Mutual, `jsmith`, the logs and the breach are all **fictional**. Any 
 
 ## Credits
 
-- Made by **Sefa** ([THESEFAWAY](https://www.sefagemade.com/)). Idea and direction are mine. I built it with [Claude Code](https://claude.com/claude-code).
+- Made by **Sefa** ([THESEFAWAY](https://www.thesefaway.com/)). Idea and direction are mine. I built it with [Claude Code](https://claude.com/claude-code).
 - The steering interface (focus gutter, pinning, radial dials, timeline scrubbing, speculative text) is inspired by [@far___behind's "Realtime LLM Vector Steering"](https://www.instagram.com/reel/DfyQPhFtW-z/).
 
 ## License
