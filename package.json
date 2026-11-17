@@ -1,0 +1,11 @@
+{
+  "name": "breach-post-mortem",
+  "version": "1.0.0",
+  "description": "A breach notice that writes itself from the logs. Turn up the spin and watch every claim lose its evidence.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --test engine.test.js",
+    "serve": "python3 -m http.server 8765"
+  }
+}

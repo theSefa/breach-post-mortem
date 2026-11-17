@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Breach Post-Mortem</title>
+<meta name="description" content="A breach notice that writes itself from the logs. Turn up the spin and watch every claim lose its evidence in real time.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Breach Post-Mortem">
+<meta property="og:description" content="A breach notice that writes itself from the logs. Turn up the spin and watch every claim lose its evidence in real time.">
+<meta property="og:url" content="https://thesefa.github.io/breach-post-mortem/">
+<meta property="og:image" content="https://thesefa.github.io/breach-post-mortem/docs/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="628">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+  /* Layout: an instrument panel. Evidence rail on the left, the statement in the middle,
+     four steering arcs under it, a telemetry strip pinned to the bottom. One deliberate dark look. */
+  :root {
+    --bg: #0a0d10;
+    --panel: #0e1216;
+    --rule: #1c232a;
+    --fg: #d5dbe1;
+    --dim: #737f8b;
+    --faint: #2f3842;
+    --thread: #aeb9c4;
+    --steer: #f2a73b;
+    --alert: #ff5b4a;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --label: 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  html, body { background: var(--bg); color: var(--fg); }
+  body {
+    font-family: var(--mono); font-size: 13px; line-height: 1.5;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+  #app { max-width: 1320px; margin: 0 auto; }
+  button { font: inherit; color: inherit; }
+  :focus-visible { outline: 1px solid var(--steer); outline-offset: 2px; }
+
+  /* header */
+  .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; padding-block: 22px 14px; border-bottom: 1px solid var(--rule); }
+  .brand { font-family: var(--label); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
+  .brand span { color: var(--dim); font-weight: 500; letter-spacing: .06em; }
+  .lede { color: var(--dim); font-size: 12px; flex: 1 1 320px; min-width: 0; }
+  .draft { font-family: var(--label); letter-spacing: .12em; text-transform: uppercase; font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .draft b { color: var(--fg); font-weight: 600; }
+  .stamp { font-family: var(--label); font-weight: 600; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+    color: var(--steer); border: 1px solid var(--steer); padding: 2px 8px; transform: rotate(-3deg); opacity: 0; transition: opacity .2s; }
+  .stamp.on { opacity: 1; }
+
+  /* stage */
+  .stage { position: relative; display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 56px; padding-block: 22px 28px; }
+  .rail h2, .dials-cap { font-family: var(--label); font-weight: 500; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+  .rail h2 span { letter-spacing: .04em; text-transform: none; color: var(--faint); margin-left: 6px; }
+  .ev-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+  .ev { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%;
+    padding: 7px 9px 8px; border: 1px solid var(--rule); background: var(--panel); position: relative; }
+  .ev:hover { border-color: var(--faint); }
+  .ev:focus-visible { outline: 1px solid var(--steer); }
+  .ev-src { font-size: 10.5px; color: var(--dim); }
+  .ev-flag { font-family: var(--label); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--steer); visibility: hidden; }
+  .ev-text { grid-column: 1 / -1; font-size: 11.5px; color: var(--fg); overflow-wrap: anywhere; }
+  .ev-att { grid-column: 1 / -1; height: 2px; background: var(--rule); margin-top: 4px; }
+  .ev-att i { display: block; height: 100%; width: 0; background: var(--thread); }
+  .ev.pinned { border-color: var(--steer); }
+  .ev.pinned .ev-flag { visibility: visible; }
+  .ev.contra { border-color: var(--alert); }
+  .ev.contra .ev-att i { background: var(--alert); }
+
+  /* statement */
+  .report { min-width: 0; }
+  .doc { min-height: 420px; }
+  .ln { display: grid; grid-template-columns: 26px 48px minmax(0, 1fr) 176px; gap: 12px; align-items: baseline; min-height: 22px; line-height: 22px; font-size: 13.5px; }
+  .ln.blank { min-height: 14px; }
+  .no { color: var(--faint); font-size: 10.5px; text-align: right; font-variant-numeric: tabular-nums; }
+  .bars { display: flex; gap: 2px; align-self: center; }
+  .bars i { width: 7px; height: 9px; background: var(--rule); }
+  .bars i.s { background: var(--fg); }
+  .bars i.b { background: var(--alert); }
+  .txt { white-space: pre; overflow: hidden; }
+  .w.head { font-weight: 700; color: #fff; }
+  .w.ghost { color: var(--faint); }
+  .k-sup { text-decoration: underline dotted var(--dim); text-underline-offset: 4px; }
+  .k-uns { text-decoration: underline dashed var(--alert); text-underline-offset: 4px; }
+  .k-con { color: #ffb3aa; text-decoration: underline solid var(--alert); text-underline-offset: 4px; }
+  .ghost .k-sup, .ghost .k-uns, .ghost .k-con { text-decoration: none; color: inherit; }
+  .ret { display: inline-block; width: 1px; height: 1px; vertical-align: middle; margin-left: 6px; }
+  .mark { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-family: var(--label); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; min-width: 0; }
+  .mark em { font-style: normal; color: var(--alert); }
+  .tag { color: var(--steer); white-space: nowrap; letter-spacing: .04em; text-transform: none; font-family: var(--mono); font-size: 10.5px; }
+  .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--steer); margin-right: 5px; vertical-align: 1px; }
+
+  /* threads */
+  #threads { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  #threads path { fill: none; stroke-width: 1; }
+  #threads .t-sup { stroke: var(--thread); opacity: .8; }
+  #threads .t-con { stroke: var(--alert); }
+  #threads .t-uns { stroke: var(--alert); stroke-dasharray: 3 3; }
+  #threads .hair { stroke: var(--rule); }
+  #threads circle { fill: var(--bg); stroke: var(--thread); }
+  #threads circle.dot-con { stroke: var(--alert); fill: var(--alert); }
+  #threads circle.dot-sup { fill: var(--thread); stroke: none; }
+  #threads text { font-family: var(--mono); font-size: 10.5px; fill: var(--alert); }
+
+  /* dials */
+  .dials-wrap { margin-top: 26px; padding-top: 18px; border-top: 1px solid var(--rule); }
+  .dials-cap span { text-transform: none; letter-spacing: .03em; color: var(--faint); margin-left: 6px; }
+  .dials { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+  .dial { min-width: 0; }
+  .dial svg { display: block; width: 100%; max-width: 240px; height: auto; touch-action: none; cursor: grab; }
+  .dial svg:active { cursor: grabbing; }
+  .dial svg:focus-visible { outline: 1px solid var(--steer); }
+  .dial .track { fill: none; stroke: var(--faint); stroke-width: 1.5; }
+  .dial .fill { fill: none; stroke: var(--steer); stroke-width: 2.5; }
+  .dial .tick { stroke: var(--dim); stroke-width: 1; }
+  .dial .bead { fill: var(--steer); }
+  .dial .end { font-family: var(--mono); font-size: 10px; fill: var(--dim); }
+  .dial .out { font-size: 11.5px; color: var(--dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .dial .out b { color: var(--steer); font-weight: 500; }
+  .dial .out i { font-style: normal; color: var(--fg); }
+
+  /* telemetry */
+  .bar { position: sticky; bottom: 0; z-index: 5; background: var(--bg); border-top: 1px solid var(--rule);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
+    font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .ctl { display: flex; gap: 6px; }
+  .btn { all: unset; cursor: pointer; border: 1px solid var(--faint); padding: 3px 10px; font-family: var(--label); letter-spacing: .1em; text-transform: uppercase; font-size: 11px; color: var(--fg); }
+  .btn:hover { border-color: var(--dim); }
+  .btn:focus-visible { outline: 1px solid var(--steer); }
+  #scrub { flex: 1 1 200px; min-width: 120px; accent-color: var(--steer); }
+  .tm { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .tm b { color: var(--fg); font-weight: 500; }
+  .tm .red b { color: var(--alert); }
+  .credit { color: var(--faint); font-size: 10.5px; margin-left: auto; }
+  .toast { position: fixed; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 6;
+    background: var(--panel); border: 1px solid var(--faint); padding: 7px 12px; font-size: 12px; color: var(--fg); max-width: min(92vw, 520px);
+    opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.on { opacity: 1; }
+
+  @media (max-width: 1100px) {
+    .stage { gap: 32px; }
+    .ln { grid-template-columns: 24px 42px minmax(0, 1fr) 96px; gap: 10px; }
+    .tag { display: none; }
+    .dials { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 860px) {
+    .stage { grid-template-columns: minmax(0, 1fr); }
+    .ev-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); }
+    .ev-text { font-size: 11px; }
+  }
+  @media (max-width: 560px) {
+    .ln { grid-template-columns: 18px 26px minmax(0, 1fr) 12px; gap: 6px; font-size: 12px; }
+    .bars i { width: 4px; }
+    .mark em { font-size: 0; }
+    .mark em::before { content: '\2715'; font-size: 11px; }
+    .lede { display: none; }
+    .credit { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .toast, .stamp { transition: none; } }
+</style>
+</head>
+<body>
+<div id="app">
+  <header class="top">
+    <div class="brand">Brightwell Mutual <span>· incident statement</span></div>
+    <div class="lede">A breach notice that writes itself from the logs. Turn up spin and watch it drift away from the evidence.</div>
+    <div class="draft">draft <b id="draftNo">v1</b></div>
+    <div class="stamp" id="stamp">approved by legal</div>
+  </header>
+
+  <main class="stage" id="stage">
+    <section class="rail" aria-label="Evidence">
+      <h2>evidence <span>click a line to pin it</span></h2>
+      <ol class="ev-list" id="evList"></ol>
+    </section>
+    <section class="report" aria-label="Statement">
+      <div class="doc" id="doc" aria-live="off"></div>
+      <div class="dials-wrap">
+        <div class="dials-cap">steering <span>drag an arc to change everything not yet written</span></div>
+        <div class="dials" id="dials"></div>
+      </div>
+    </section>
+    <svg id="threads" aria-hidden="true"></svg>
+  </main>
+
+  <footer class="bar">
+    <div class="ctl">
+      <button class="btn" id="play" type="button">pause</button>
+      <button class="btn" id="redraft" type="button">redraft</button>
+    </div>
+    <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Timeline: drag back to rewrite from there">
+    <div class="tm" id="tm"></div>
+    <div class="credit">after @far___behind's realtime vector steering</div>
+  </footer>
+  <div class="toast" id="toast" role="status"></div>
+</div>
+
+<script src="engine.js"></script>
+<script>
+(() => {
+  'use strict';
+  const E = window.BreachEngine;
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+
+  const RATE = 7;              // words per second shown to the reader
+  const settings = { spin: 0.55, attacker: 0.4, blame: 0.35, legal: 0.3 };
+  const pins = new Set();
+  const tags = [];             // dial changes docked at the word where they took effect
+  const sentWords = new Map(); // sid -> words of that sentence
+  const attention = Object.fromEntries(E.EVIDENCE.map((e) => [e.id, 0]));
+
+  let committed = [];          // frozen: never rewritten
+  let plan = [];               // speculated future under current settings
+  let spec = 0;                // how much of plan is speculated so far
+  let latency = 0, latencyMs = 0, wps = 0;
+  let playing = true, scrubbing = false, dragging = false, acc = 0, dirty = true;
+  let steer = 0, draft = 1, cols = 64, lastTs = 0, doneToasted = false;
+
+  // ---------- generation ----------
+  function register(words) {
+    for (const w of words) {
+      if (!sentWords.has(w.sid)) sentWords.set(w.sid, []);
+      sentWords.get(w.sid)[w.wi] = w;
+    }
+  }
+
+  function replan(invalidate) {
+    const last = committed[committed.length - 1];
+    let remainder = [], from = 0;
+    if (last) {
+      if (last.wi < last.n - 1) remainder = sentWords.get(last.sid).slice(last.wi + 1);
+      from = Math.floor(last.beat) + 1;
+    }
+    const cited = new Set(committed.flatMap((w) => w.cites));
+    remainder.forEach((w) => w.cites.forEach((id) => cited.add(id)));
+    const fresh = E.toWords(E.generate(settings, pins, from, cited));
+    register(fresh);
+    plan = remainder.concat(fresh);
+    spec = Math.min(spec, remainder.length);  // drop speculated text past the sentence in flight
+    latency = invalidate ? 0.3 + Math.random() * 0.25 : 0.1 + Math.random() * 0.1;
+    latencyMs = Math.round(latency * 1000);
+    dirty = true;
+  }
+
+  function emit(n) {
+    for (let i = 0; i < n && plan.length; i++) {
+      committed.push(plan.shift());
+      spec = Math.max(0, spec - 1);
+    }
+    dirty = true;
+  }
+
+  function bumpDraft() { draft++; $('#draftNo').textContent = 'v' + draft; }
+
+  function redraftFromTop(msg) {
+    committed = []; tags.length = 0; doneToasted = false;
+    replan(true); bumpDraft();
+    if (msg) toast(msg);
+  }
+
+  function commitSteer(key) {
+    steer++;
+    if (!plan.length) { redraftFromTop('Statement was already published. Redrafting from the top.'); return; }
+    tags.push({ at: committed.length, key, text: `${label(key)}: ${E.stopLabel(key, settings[key])} ${Math.round(settings[key] * 100)}%` });
+    replan(true); bumpDraft();
+  }
+
+  const label = (key) => E.DIALS.find((d) => d.key === key).label;
+
+  // ---------- evidence rail ----------
+  const evEls = {};
+  E.EVIDENCE.forEach((e) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<button class="ev" type="button" id="ev-${e.id}" aria-pressed="false">
+      <span class="ev-src">${esc(e.src)}</span><span class="ev-flag">pinned</span>
+      <span class="ev-text">${esc(e.text)}</span><span class="ev-att"><i></i></span></button>`;
+    const btn = li.firstElementChild;
+    btn.addEventListener('click', () => {
+      const on = !pins.has(e.id);
+      on ? pins.add(e.id) : pins.delete(e.id);
+      btn.classList.toggle('pinned', on);
+      btn.setAttribute('aria-pressed', String(on));
+      if (!plan.length && on) { redraftFromTop(`Pinned ${e.src}. Redrafting so the statement has to address it.`); return; }
+      replan(true); bumpDraft();
+      if (on) toast(`Pinned ${e.src}. The statement now has to address it.`);
+    });
+    $('#evList').appendChild(li);
+    evEls[e.id] = { btn, bar: btn.querySelector('.ev-att i') };
+  });
+
+  // ---------- dials ----------
+  const NS = 'http://www.w3.org/2000/svg';
+  const CX = 120, CY = 6, R = 92;
+  const th = (v) => Math.PI * (0.92 - 0.84 * v);
+  const pt = (v, r = R) => [CX + r * Math.cos(th(v)), CY + r * Math.sin(th(v))];
+  const arc = (a, b) => {
+    const [x0, y0] = pt(a), [x1, y1] = pt(b);
+    return `M${x0.toFixed(1)},${y0.toFixed(1)} A${R},${R} 0 0 0 ${x1.toFixed(1)},${y1.toFixed(1)}`;
+  };
+  const dialUI = {};
+
+  E.DIALS.forEach((d) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'dial';
+    const ticks = [0, 1 / 3, 2 / 3, 1].map((v) => {
+      const [a, b] = pt(v, R - 5), [c, e] = pt(v, R + 5);
+      return `<line class="tick" x1="${a.toFixed(1)}" y1="${b.toFixed(1)}" x2="${c.toFixed(1)}" y2="${e.toFixed(1)}"/>`;
+    }).join('');
+    wrap.innerHTML = `
+      <svg viewBox="0 0 240 112" role="slider" tabindex="0" aria-label="${esc(d.label)}" aria-valuemin="0" aria-valuemax="100">
+        <text class="end" x="2" y="12">${esc(d.stops[0])}</text>
+        <text class="end" x="238" y="12" text-anchor="end">${esc(d.stops[3])}</text>
+        <path class="track" d="${arc(0, 1)}"/>
+        <path class="fill"/>${ticks}
+        <circle class="bead" r="6"/>
+      </svg>
+      <div class="out"></div>`;
+    const svg = wrap.querySelector('svg');
+    const ui = { svg, fill: wrap.querySelector('.fill'), bead: wrap.querySelector('.bead'), out: wrap.querySelector('.out') };
+    dialUI[d.key] = ui;
+
+    const fromEvent = (ev) => {
+      const p = svg.createSVGPoint(); p.x = ev.clientX; p.y = ev.clientY;
+      const q = p.matrixTransform(svg.getScreenCTM().inverse());
+      let a = Math.atan2(q.y - CY, q.x - CX);
+      if (a < 0) a = q.x < CX ? Math.PI : 0;
+      return Math.max(0, Math.min(1, (0.92 - a / Math.PI) / 0.84));
+    };
+    const set = (v) => { settings[d.key] = v; drawDial(d.key); replan(!dragging); };
+
+    let mine = false;
+    svg.addEventListener('pointerdown', (ev) => {
+      ev.preventDefault(); mine = true; dragging = true;
+      try { svg.setPointerCapture(ev.pointerId); } catch (_) { /* window listeners cover it */ }
+      set(fromEvent(ev));
+    });
+    window.addEventListener('pointermove', (ev) => { if (mine) set(fromEvent(ev)); });
+    const end = () => { if (!mine) return; mine = false; dragging = false; commitSteer(d.key); };
+    window.addEventListener('pointerup', end);
+    window.addEventListener('pointercancel', end);
+    svg.addEventListener('keydown', (ev) => {
+      const step = { ArrowLeft: -0.05, ArrowDown: -0.05, ArrowRight: 0.05, ArrowUp: 0.05 }[ev.key];
+      if (step == null) return;
+      ev.preventDefault();
+      settings[d.key] = Math.max(0, Math.min(1, settings[d.key] + step));
+      drawDial(d.key);
+    });
+    svg.addEventListener('keyup', (ev) => { if (ev.key.startsWith('Arrow')) commitSteer(d.key); });
+    $('#dials').appendChild(wrap);
+    drawDial(d.key);
+  });
+
+  function drawDial(key) {
+    const ui = dialUI[key], v = settings[key];
+    const [x, y] = pt(v);
+    ui.bead.setAttribute('cx', x.toFixed(1)); ui.bead.setAttribute('cy', y.toFixed(1));
+    ui.fill.setAttribute('d', v > 0.005 ? arc(0, v) : '');
+    ui.svg.setAttribute('aria-valuenow', String(Math.round(v * 100)));
+    ui.svg.setAttribute('aria-valuetext', `${E.stopLabel(key, v)}, ${Math.round(v * 100)}%`);
+    ui.out.innerHTML = `${esc(label(key))}: <b>${esc(E.stopLabel(key, v))}</b> <i>${Math.round(v * 100)}%</i>`;
+    if (key === 'legal') $('#stamp').classList.toggle('on', E.level(v) >= 2);
+  }
+
+  // ---------- statement layout ----------
+  function measure() {
+    const doc = $('#doc');
+    const probe = document.createElement('div');
+    probe.className = 'ln'; probe.style.visibility = 'hidden';
+    probe.innerHTML = '<span class="no"></span><span class="bars"></span><span class="txt"><span id="probe">MMMMMMMMMMMMMMMMMMMM</span></span><span class="mark"></span>';
+    doc.appendChild(probe);
+    const ch = probe.querySelector('#probe').getBoundingClientRect().width / 20;
+    const w = probe.querySelector('.txt').getBoundingClientRect().width;
+    probe.remove();
+    cols = Math.max(24, Math.floor(w / ch) - 2);
+    dirty = true;
+  }
+
+  function layout() {
+    const ghostN = Math.min(6, Math.floor(spec), plan.length);
+    const items = committed.map((w, i) => ({ w, i, ghost: false }))
+      .concat(plan.slice(0, ghostN).map((w, j) => ({ w, i: committed.length + j, ghost: true })));
+    const lines = [];
+    let line = null, len = 0;
+    const open = () => { line = { items: [] }; lines.push(line); len = 0; };
+    for (const it of items) {
+      if (!line) open();
+      else if (it.w.para) { lines.push({ blank: true }); open(); }
+      const L = it.w.t.length;
+      if (len && len + 1 + L > cols) open();
+      line.items.push(it);
+      len += (len ? 1 : 0) + L;
+    }
+    if (!lines.length) lines.push({ items: [] });
+    return lines;
+  }
+
+  const kind = (g) => !g.claim ? '' : g.contra.length ? 'k-con' : g.cites.length ? 'k-sup' : 'k-uns';
+
+  function render() {
+    const lines = layout();
+    const lastIdx = committed.length - 1;
+    const tagAt = new Map();
+    tags.forEach((t) => { const k = Math.max(0, t.at - 1); (tagAt.get(k) || tagAt.set(k, []).get(k)).push(t); });
+    let html = '', no = 0;
+    for (const line of lines) {
+      if (line.blank) { html += '<div class="ln blank"></div>'; continue; }
+      no++;
+      const sup = new Set(), bad = new Set();
+      let con = false, uns = false, lineTags = [];
+      const parts = line.items.map(({ w, i, ghost }) => {
+        const inner = w.segs.map((g) => {
+          const k = kind(g);
+          if (!ghost) {
+            if (k === 'k-sup') g.cites.forEach((id) => sup.add(id));
+            if (k === 'k-con') { con = true; bad.add(g.contra); }
+            if (k === 'k-uns') { uns = true; bad.add(g.cites); }
+          }
+          return k ? `<span class="${k}">${esc(g.t)}</span>` : esc(g.t);
+        }).join('');
+        if (!ghost && tagAt.has(i)) lineTags = lineTags.concat(tagAt.get(i));
+        const first = w.segs[0], last = w.segs[w.segs.length - 1];
+        return {
+          ghost, firstKey: first.claim ? first.cites : null, lastKey: last.claim ? last.cites : null, lastKind: kind(last),
+          html: `<span class="w${w.head ? ' head' : ''}${ghost ? ' ghost' : ''}">${inner}</span>` + (i === lastIdx ? '<span class="ret" id="ret"></span>' : ''),
+        };
+      });
+      const words = parts.map((p, k) => {
+        const next = parts[k + 1];
+        if (!next) return p.html;
+        const joined = p.lastKey && p.lastKey === next.firstKey && !p.ghost && !next.ghost;
+        return p.html + (joined ? `<span class="${p.lastKind}"> </span>` : ' ');
+      }).join('');
+      if (lastIdx < 0 && no === 1) lineTags = [];
+      const s = Math.min(5, sup.size), b = Math.min(5 - s, bad.size);
+      const bars = '<i class="s"></i>'.repeat(s) + '<i class="b"></i>'.repeat(b) + '<i></i>'.repeat(5 - s - b);
+      const mark = con ? '<em>contradicted</em>' : uns ? '<em>unsupported</em>' : '';
+      const tagHtml = lineTags.map((t) => `<span class="tag">${esc(t.text)}</span>`).join('');
+      const retStart = lastIdx < 0 && no === 1 ? '<span class="ret" id="ret"></span>' : '';
+      html += `<div class="ln"><span class="no">${no}</span><span class="bars">${bars}</span><span class="txt">${retStart}${words}</span><span class="mark">${mark}${tagHtml}</span></div>`;
+    }
+    $('#doc').innerHTML = html;
+    const scrub = $('#scrub');
+    scrub.max = String(Math.max(1, committed.length + plan.length));
+    if (!scrubbing) scrub.value = String(committed.length);
+    drawThreads();
+    telemetry();
+  }
+
+  // ---------- threads ----------
+  function currentClaims() {
+    const last = committed[committed.length - 1];
+    const sup = new Set(), con = new Set(), uns = new Set();
+    if (!last) return { sup, con, uns };
+    for (let i = committed.length - 1; i >= 0 && committed[i].sid === last.sid; i--) {
+      for (const g of committed[i].segs) {
+        if (!g.claim) continue;
+        if (g.contra.length) g.contra.forEach((id) => con.add(id));
+        else if (g.cites.length) g.cites.forEach((id) => sup.add(id));
+        else uns.add(g.cites);
+      }
+    }
+    con.forEach((id) => sup.delete(id));
+    return { sup, con, uns };
+  }
+
+  function drawThreads() {
+    const svg = $('#threads'), stage = $('#stage'), ret = $('#ret');
+    const st = stage.getBoundingClientRect();
+    svg.setAttribute('viewBox', `0 0 ${st.width.toFixed(0)} ${st.height.toFixed(0)}`);
+    const { sup, con, uns } = currentClaims();
+    Object.entries(evEls).forEach(([id, el]) => el.btn.classList.toggle('contra', con.has(id)));
+    if (!ret) { svg.innerHTML = ''; return; }
+    const r = ret.getBoundingClientRect();
+    const x0 = r.left - st.left, y0 = r.top - st.top;
+    const stacked = window.matchMedia('(max-width: 860px)').matches;
+    let out = `<path class="hair" d="M0,${y0.toFixed(1)} H${st.width.toFixed(0)}"/><path class="hair" d="M${x0.toFixed(1)},0 V${st.height.toFixed(0)}"/>`;
+    const to = (id, cls) => {
+      const b = evEls[id].btn.getBoundingClientRect();
+      let x1, y1, d;
+      if (stacked) {
+        x1 = b.left + b.width * 0.5 - st.left; y1 = b.bottom - st.top;
+        d = `M${x0},${y0} C${x0},${y0 - (y0 - y1) * 0.55} ${x1},${y1 + (y0 - y1) * 0.35} ${x1},${y1}`;
+      } else {
+        x1 = b.right - st.left; y1 = b.top + b.height / 2 - st.top;
+        d = `M${x0},${y0} C${x0 - (x0 - x1) * 0.45},${y0 + 36} ${x1 + (x0 - x1) * 0.35},${y1} ${x1},${y1}`;
+      }
+      out += `<path class="${cls}" d="${d}"/><circle class="${cls === 't-con' ? 'dot-con' : 'dot-sup'}" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="2.5"/>`;
+    };
+    sup.forEach((id) => to(id, 't-sup'));
+    con.forEach((id) => to(id, 't-con'));
+    [...uns].forEach((_, k) => {
+      const ex = x0 + 22 + k * 24, ey = y0 + 44 + k * 10;
+      out += `<path class="t-uns" d="M${x0},${y0} Q${x0 + 4},${ey + 12} ${ex},${ey}"/><text x="${ex - 4}" y="${ey + 4}">╳</text>`;
+      if (k === uns.size - 1) out += `<text x="${ex + 12}" y="${ey + 4}">no evidence</text>`;
+    });
+    out += `<circle cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="6"/><circle class="dot-sup" cx="${x0.toFixed(1)}" cy="${y0.toFixed(1)}" r="1.5"/>`;
+    svg.innerHTML = out;
+  }
+
+  // ---------- telemetry ----------
+  function telemetry() {
+    const seen = new Set();
+    let s = 0, u = 0, c = 0;
+    for (const w of committed) for (const g of w.segs) {
+      if (!g.claim || seen.has(g.cites)) continue;
+      seen.add(g.cites);
+      if (g.contra.length) c++; else if (g.cites.length) s++; else u++;
+    }
+    const total = s + u + c;
+    const cred = total ? Math.round((s / total) * 100) : 100;
+    $('#tm').innerHTML = [
+      `» <b>${wps ? Math.round(wps) : '—'}</b> w/s`,
+      `▾ <b>${latencyMs}</b>ms`,
+      `¶ <b>${committed.length}›${Math.floor(spec)}</b>`,
+      `pin <b>${pins.size}</b>`,
+      `steer <b>${steer}</b>`,
+      `<span class="red">unsupported <b>${u}</b></span>`,
+      `<span class="red">contradicted <b>${c}</b></span>`,
+      `credibility <b>${cred}%</b>`,
+    ].map((x) => `<span>${x}</span>`).join('');
+  }
+
+  // ---------- toast ----------
+  let toastTimer = 0;
+  function toast(msg) {
+    const el = $('#toast');
+    el.textContent = msg; el.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove('on'), 3200);
+  }
+
+  // ---------- controls ----------
+  const playBtn = $('#play');
+  const setPlaying = (p) => { playing = p; playBtn.textContent = p ? 'pause' : 'play'; };
+  playBtn.addEventListener('click', () => setPlaying(!playing));
+  $('#redraft').addEventListener('click', () => redraftFromTop());
+  document.addEventListener('keydown', (ev) => {
+    if (ev.key !== ' ' || ev.target.closest('button, input, [role="slider"]')) return;
+    ev.preventDefault(); setPlaying(!playing);
+  });
+
+  const scrub = $('#scrub');
+  scrub.addEventListener('pointerdown', () => { scrubbing = true; });
+  scrub.addEventListener('input', () => {
+    const v = +scrub.value;
+    if (v < committed.length) {
+      committed = committed.slice(0, v);
+      for (let i = tags.length - 1; i >= 0; i--) if (tags[i].at > v) tags.splice(i, 1);
+      doneToasted = false;
+      replan(true);
+    } else if (v > committed.length) {
+      spec = Math.max(spec, Math.min(plan.length, v - committed.length));
+      emit(v - committed.length);
+    }
+  });
+  const scrubEnd = () => { if (!scrubbing) return; scrubbing = false; bumpDraft(); };
+  scrub.addEventListener('pointerup', scrubEnd);
+  scrub.addEventListener('change', scrubEnd);
+
+  // ---------- loop ----------
+  function frame(ts) {
+    const dt = lastTs ? Math.min(0.1, (ts - lastTs) / 1000) : 0;
+    lastTs = ts;
+    if (latency > 0) { latency -= dt; wps = 0; }
+    else if (spec < plan.length) {
+      wps = 1100 + Math.random() * 500;
+      spec = Math.min(plan.length, spec + wps * dt * 0.25);
+      dirty = true;
+    } else if (wps) { wps = 0; dirty = true; }
+
+    if (playing && !scrubbing && plan.length) {
+      acc = Math.min(acc + dt * RATE, 3);
+      const n = Math.min(Math.floor(acc), Math.floor(spec));
+      if (n > 0) { emit(n); acc -= n; }
+    }
+    if (!plan.length && committed.length && !doneToasted) {
+      doneToasted = true;
+      toast('Statement published. Drag the timeline back, or turn a dial to redraft.');
+    }
+
+    const { sup, con } = currentClaims();
+    for (const id in attention) {
+      const hot = sup.has(id) || con.has(id);
+      attention[id] = hot ? Math.min(1, attention[id] + dt * 4) : attention[id] * Math.exp(-dt * 0.7);
+      evEls[id].bar.style.width = (attention[id] * 100).toFixed(1) + '%';
+    }
+
+    if (dirty) { dirty = false; render(); }
+    requestAnimationFrame(frame);
+  }
+
+  // ---------- boot: open on a half-written draft so the first view already shows the idea ----------
+  measure();
+  replan(false);
+  spec = plan.length;
+  emit(22);
+  latency = 0;
+  window.addEventListener('resize', () => { measure(); render(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); render(); });
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
