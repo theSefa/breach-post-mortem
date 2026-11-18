@@ -17,14 +17,14 @@
     const l = Math.max(0, Math.min(stops.length - 1, level)), i = Math.min(stops.length - 2, Math.floor(l));
     return stops[i] + (stops[i + 1] - stops[i]) * (l - i);
   }
-  const DROPOUT = [0, .12, .28, .45];
+  const DROPOUT = [0, .08, .18, .3];
   const ACCENT = [0, .08, .2, .35];
   const INK = 0.04;   // below this a cell is paper, not ink
 
   // accentFrom: {col, row} — cells right of col on rows at or below row can turn accent; null for none.
   function dotField({ cols, rows, cell, coverage, accentFrom = null }, level, seed = 1) {
     const drop = lerpStops(DROPOUT, level), accent = lerpStops(ACCENT, level);
-    const shrink = 1 - 0.12 * level, wobble = cell * 0.35 * level / 3;
+    const shrink = 1 - 0.08 * level, wobble = cell * 0.22 * level / 3;
     const dots = [];
     for (let row = 0; row < rows; row++) {
       for (let col = 0; col < cols; col++) {
