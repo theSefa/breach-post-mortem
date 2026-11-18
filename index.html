@@ -15,23 +15,26 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap">
 <style>
-  /* Layout: an instrument panel. Evidence rail on the left, the statement in the middle,
-     four steering arcs under it, a telemetry strip pinned to the bottom. One deliberate dark look. */
+  /* Redaction 50 (MCKL, SIL OFL 1.1, see fonts/OFL.txt): the spun half of the headline. */
+  @font-face { font-family: 'Redaction 50'; src: url(fonts/Redaction_50-Regular.woff2) format('woff2'); font-display: swap; }
+  /* Layout: an instrument panel on paper. Evidence rail on the left, the statement in the middle,
+     four steering arcs above it, a telemetry strip pinned to the bottom. Poppins for words people
+     read, Space Mono for logs, labels and the statement, Redaction for the spin. */
   :root {
-    --bg: #0a0d10;
-    --panel: #0e1216;
-    --rule: #1c232a;
-    --fg: #d5dbe1;
-    --dim: #737f8b;
-    --faint: #2f3842;
-    --thread: #aeb9c4;
-    --steer: #f2a73b;
-    --alert: #ff5b4a;
-    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --label: 'IBM Plex Sans Condensed', 'Arial Narrow', system-ui, sans-serif;
-    color-scheme: dark;
+    --bg: #f3f2ee;
+    --panel: #ffffff;
+    --rule: #dedcd5;
+    --fg: #111111;
+    --dim: #6c6b66;
+    --faint: #c9c7bf;
+    --thread: #4a4a4a;
+    --steer: #ff6b1a;
+    --alert: #e8364f;
+    --mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --label: 'Poppins', system-ui, sans-serif;
+    color-scheme: light;
   }
   html, body { background: var(--bg); color: var(--fg); }
   body {
@@ -44,27 +47,27 @@
   :focus-visible { outline: 1px solid var(--steer); outline-offset: 2px; }
 
   /* header */
-  .top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; padding-block: 22px 14px; border-bottom: 1px solid var(--rule); }
-  .brand { font-family: var(--label); font-weight: 600; letter-spacing: .14em; text-transform: uppercase; font-size: 13px; }
-  .brand span { color: var(--dim); font-weight: 500; letter-spacing: .06em; }
-  .lede { color: var(--dim); font-size: 12px; flex: 1 1 320px; min-width: 0; }
-  .draft { font-family: var(--label); letter-spacing: .12em; text-transform: uppercase; font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+  .top { position: relative; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; padding-block: 22px 14px; border-bottom: 1px solid var(--rule); }
+  .brand { font-family: var(--label); font-weight: 600; letter-spacing: -.01em; font-size: 15px; }
+  .brand span { color: var(--dim); font-weight: 400; }
+  .lede { font-family: var(--label); color: var(--dim); font-size: 13px; flex: 1 1 320px; min-width: 0; }
+  .draft { font-family: var(--mono); letter-spacing: .08em; text-transform: uppercase; font-size: 11px; color: var(--dim); font-variant-numeric: tabular-nums; }
   .draft b { color: var(--fg); font-weight: 600; }
-  .stamp { font-family: var(--label); font-weight: 600; font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  .stamp { font-family: var(--label); font-weight: 600; font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
     color: var(--steer); border: 1px solid var(--steer); padding: 2px 8px; transform: rotate(-3deg); opacity: 0; transition: opacity .2s; }
   .stamp.on { opacity: 1; }
 
   /* stage */
   .stage { position: relative; display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 56px; padding-block: 22px 28px; }
-  .rail h2, .dials-cap { font-family: var(--label); font-weight: 500; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
+  .rail h2, .dials-cap { font-family: var(--mono); font-weight: 400; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin: 0 0 10px; }
   .rail h2 span { letter-spacing: .04em; text-transform: none; color: var(--faint); margin-left: 6px; }
   .ev-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
   .ev { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; width: 100%;
-    padding: 7px 9px 8px; border: 1px solid var(--rule); background: var(--panel); position: relative; }
+    padding: 8px 10px 9px; border: 1px solid var(--rule); background: var(--panel); border-radius: 2px; position: relative; }
   .ev:hover { border-color: var(--faint); }
   .ev:focus-visible { outline: 1px solid var(--steer); }
   .ev-src { font-size: 10.5px; color: var(--dim); }
-  .ev-flag { font-family: var(--label); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--steer); visibility: hidden; }
+  .ev-flag { font-family: var(--label); font-weight: 600; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--steer); visibility: hidden; }
   .ev-text { grid-column: 1 / -1; font-size: 11.5px; color: var(--fg); overflow-wrap: anywhere; }
   .ev-att { grid-column: 1 / -1; height: 2px; background: var(--rule); margin-top: 4px; }
   .ev-att i { display: block; height: 100%; width: 0; background: var(--thread); }
@@ -84,14 +87,14 @@
   .bars i.s { background: var(--fg); }
   .bars i.b { background: var(--alert); }
   .txt { white-space: pre; overflow: hidden; }
-  .w.head { font-weight: 700; color: #fff; }
+  .w.head { font-weight: 700; color: var(--fg); }
   .w.ghost { color: var(--faint); }
   .k-sup { text-decoration: underline dotted var(--dim); text-underline-offset: 4px; }
   .k-uns { text-decoration: underline dashed var(--alert); text-underline-offset: 4px; }
-  .k-con { color: #ffb3aa; text-decoration: underline solid var(--alert); text-underline-offset: 4px; }
+  .k-con { color: var(--alert); text-decoration: underline solid var(--alert); text-underline-offset: 4px; }
   .ghost .k-sup, .ghost .k-uns, .ghost .k-con { text-decoration: none; color: inherit; }
   .ret { display: inline-block; width: 1px; height: 1px; vertical-align: middle; margin-left: 6px; }
-  .mark { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-family: var(--label); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; min-width: 0; }
+  .mark { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-family: var(--label); font-weight: 600; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; min-width: 0; }
   .mark em { font-style: normal; color: var(--alert); }
   .tag { color: var(--steer); white-space: nowrap; letter-spacing: .04em; text-transform: none; font-family: var(--mono); font-size: 10.5px; }
   .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--steer); margin-right: 5px; vertical-align: 1px; }
@@ -121,16 +124,20 @@
   .dial .tick { stroke: var(--dim); stroke-width: 1; }
   .dial .bead { fill: var(--steer); }
   .dial .end { font-family: var(--mono); font-size: 10px; fill: var(--dim); }
-  .dial .out { font-size: 11.5px; color: var(--dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
-  .dial .out b { color: var(--steer); font-weight: 500; }
-  .dial .out i { font-style: normal; color: var(--fg); }
+  .dial .out { font-family: var(--label); font-size: 13px; color: var(--dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
+  .dial .out b { color: var(--fg); font-weight: 600; }
+  .dial .out i { font-style: normal; font-family: var(--mono); font-size: 11px; color: var(--dim); }
 
   /* telemetry */
   .bar { position: sticky; bottom: 0; z-index: 5; background: var(--bg); border-top: 1px solid var(--rule);
     display: flex; flex-wrap: wrap; align-items: center; gap: 8px 18px; padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
     font-size: 11.5px; color: var(--dim); font-variant-numeric: tabular-nums; }
-  .ctl { display: flex; flex-wrap:wrap; gap: 6px; } #branches { max-width:180px; background:var(--panel); color:var(--fg); border:1px solid var(--faint); font:inherit; }
-  .btn { all: unset; cursor: pointer; border: 1px solid var(--faint); padding: 3px 10px; font-family: var(--label); letter-spacing: .1em; text-transform: uppercase; font-size: 11px; color: var(--fg); }
+  .ctl { display: flex; flex-wrap:wrap; gap: 6px; } #branches { max-width:180px; background:var(--panel); color:var(--fg); border:1px solid var(--faint); border-radius:999px; padding:4px 10px; font:500 12px var(--label); }
+  .btn { all: unset; cursor: pointer; border: 1px solid var(--faint); border-radius: 999px; padding: 5px 14px; font-family: var(--label); font-weight: 600; letter-spacing: .01em; font-size: 12px; color: var(--fg); }
+  .btn::first-letter { text-transform: uppercase; }
+  .btn { display: inline-block; }
+  .btn.primary { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+  .btn.primary:hover { border-color: var(--fg); }
   .btn:hover { border-color: var(--dim); }
   .btn:focus-visible { outline: 1px solid var(--steer); }
   #scrub { flex: 1 1 200px; min-width: 120px; accent-color: var(--steer); }
@@ -138,7 +145,7 @@
   .tm b { color: var(--fg); font-weight: 500; }
   .tm .red b { color: var(--alert); }
   .credit { color: var(--faint); font-size: 10.5px; margin-left: auto; }
-  .toast { position: fixed; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 6;
+  .toast { font-family: var(--label); position: fixed; left: 50%; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 6;
     background: var(--panel); border: 1px solid var(--faint); padding: 7px 12px; font-size: 12px; color: var(--fg); max-width: min(92vw, 520px);
     opacity: 0; transition: opacity .2s; pointer-events: none; }
   .toast.on { opacity: 1; }
@@ -164,44 +171,62 @@
   }
   @media (prefers-reduced-motion: reduce) { .toast, .stamp { transition: none; } }
 
-  .lab { padding: 30px 0; display:grid; grid-template-columns: 1fr 300px; gap: 22px 48px; border-bottom:1px solid var(--rule); }
-  h1 { font-family:var(--label); font-size: clamp(28px, 4vw, 46px); line-height:1.1; margin:10px 0; font-weight:500; }
-  .lab p { margin:8px 0; color:var(--dim); }
-  .eyebrow { font-size:10px; color:var(--steer); text-transform:uppercase; letter-spacing:.12em; }
-  .lab-control { align-self:center; } .lab-control label { display:flex; justify-content:space-between; font-size:11px; }
+  .lab { padding: 40px 0 32px; display:grid; grid-template-columns: 1fr 300px; gap: 22px 48px; border-bottom:1px solid var(--rule); }
+  .lab > div { min-width:0; }
+  .lab h1 { margin:14px 0 12px; font:600 clamp(40px, 6.4vw, 84px)/.98 var(--label); letter-spacing:-.035em; }
+  .lab h1 .spun { display:block; font-family:'Redaction 50', Georgia, serif; font-weight:400; letter-spacing:-.01em; color:var(--steer); }
+  .lab p { margin:8px 0; color:var(--dim); font-family:var(--label); font-size:15px; }
+  .eyebrow { font-family:var(--mono); font-size:11px; color:var(--steer); text-transform:uppercase; letter-spacing:.1em; }
+  .lab-control { align-self:center; } .lab-control label { display:flex; justify-content:space-between; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
   .lab-control b { color:var(--steer); } #heroSpin { width:100%; margin:20px 0 8px; accent-color:var(--steer); }
-  .ends { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); }
-  .lab-copy { grid-column:1/-1; display:grid; grid-template-columns:150px 1fr; gap:8px 20px; padding:18px 22px; border-left:2px solid var(--steer); background:var(--panel); }
-  .lab-copy p { margin:0; } .lab-copy #spinPreview { color:var(--fg); min-height:40px; font-size:16px; }
+  .ends { display:flex; justify-content:space-between; font-size:11px; color:var(--dim); }
+  /* tracked-changes redline: legal strikes the truth and inserts the spin */
+  .redline { grid-column:1/-1; background:var(--panel); border:1px solid var(--rule); border-radius:2px; }
+  .rl-head { display:flex; justify-content:space-between; gap:12px; padding:9px 16px; border-bottom:1px dashed var(--faint); font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--dim); }
+  .redline.edited #rlMeta { color:var(--steer); }
+  .rl-row { display:grid; grid-template-columns:18px 170px minmax(0,1fr); gap:6px 16px; align-items:baseline; padding:14px 16px; }
+  .rl-row + .rl-row { border-top:1px solid var(--rule); }
+  .rl-g { font-weight:700; font-size:15px; color:var(--faint); }
+  .rl-k { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--dim); }
+  .redline .rl-row p { margin:0; font-size:14px; color:var(--dim); }
+  .redline.edited .rl-del .rl-g { color:var(--alert); }
+  .redline.edited .rl-del p { text-decoration:line-through; text-decoration-color:var(--alert); text-decoration-thickness:1.5px; }
+  .redline .rl-ins p { min-height:28px; font-size:19px; font-weight:500; letter-spacing:-.01em; color:var(--fg); }
+  .redline.edited .rl-ins .rl-g { color:var(--steer); }
+  .redline.edited #spinPreview { background:linear-gradient(transparent 62%, rgba(255,107,26,.28) 62%); -webkit-box-decoration-break:clone; box-decoration-break:clone; }
   .dials-wrap { position:sticky; top:0; z-index:3; background:var(--bg); margin:0 0 20px; padding:12px 0; border-top:0; border-bottom:1px solid var(--rule); }
   .dials { gap:12px; grid-template-columns:repeat(4,minmax(0,1fr)); } .dial .out { font-size:10px; }
-  .report-tools { display:flex; gap:12px; justify-content:space-between; align-items:center; margin:16px 0; color:var(--dim); font-size:10px; }
+  .report-tools { display:flex; gap:12px; justify-content:space-between; align-items:center; margin:16px 0; color:var(--dim); font-family:var(--label); font-size:12px; }
   .pin-notice,.inspector,.comparison { padding:16px; background:var(--panel); border:1px solid var(--rule); margin:12px 0; overflow-wrap:anywhere; }
   .pin-notice { border-color:var(--steer); color:var(--steer); font-size:12px; }
-  .inspector .btn { float:right; } .claim-source { padding:8px 0; color:var(--dim); font-size:11px; border-top:1px solid var(--rule); }
+  .inspector { font-family:var(--label); } .inspector .btn { float:right; } .claim-source { padding:8px 0; color:var(--dim); font-size:11px; border-top:1px solid var(--rule); }
   .comparison { max-height:260px; overflow:auto; } .k-mis { color:var(--steer); text-decoration:underline wavy; text-underline-offset:4px; }
-  [data-claim] { cursor:pointer; } [data-claim]:hover { background:#28323b; }
+  [data-claim] { cursor:pointer; } [data-claim]:hover { background:rgba(255,107,26,.12); }
   .ghost .k-mis { color:inherit; text-decoration:none; } .mark .misleading { color:var(--steer); }
   .ln { grid-template-columns:20px 30px minmax(0,1fr) 90px; gap:8px; } .bars i { width:4px; }
   .rail h2 span { color:var(--dim); } .doc { padding-bottom:40px; }
-  @media(max-width:860px) { .lab { grid-template-columns:1fr; } .lab-copy { grid-template-columns:1fr; } .report { grid-row:1; } .dials-wrap { top:0; } .stage { gap:24px; } .lab-control { max-width:500px; width:100%; } }
-  @media(max-width:560px) { .dials { grid-template-columns:repeat(2,minmax(0,1fr)); } .dial svg { max-height:66px; } .dials-wrap { position:relative; } .ln { grid-template-columns:18px minmax(0,1fr); } .bars,.mark { display:none; } .report-tools { flex-wrap:wrap; } .lab-copy { padding:12px; } }
-.model-controls { border:1px solid var(--rule); padding:12px; margin:12px 0; font-size:11px; } .model-controls label { color:var(--steer); } #modelStatus { display:block; margin-top:6px; color:var(--dim); } #modelStatus a { color:var(--steer); } .model-controls p { color:var(--dim); margin-bottom:0; } .k-ai { color:#b5b6ff; text-decoration:underline dotted; text-underline-offset:4px; } .mark .ai-label { color:#b5b6ff; }
+  @media(max-width:860px) { .lab { grid-template-columns:1fr; } .rl-row { grid-template-columns:18px minmax(0,1fr); } .rl-row p { grid-column:2; } .rl-head span + span { display:none; } .report { grid-row:1; } .dials-wrap { top:0; } .stage { gap:24px; } .lab-control { max-width:500px; width:100%; } }
+  @media(max-width:560px) { .dials { grid-template-columns:repeat(2,minmax(0,1fr)); } .dial svg { max-height:66px; } .dials-wrap { position:relative; } .ln { grid-template-columns:18px minmax(0,1fr); } .bars,.mark { display:none; } .report-tools { flex-wrap:wrap; } }
+.model-controls { border:1px solid var(--rule); border-radius:2px; padding:14px 16px; margin:12px 0; font-family:var(--label); font-size:13px; background:var(--panel); } .model-controls label { color:var(--fg); font-weight:600; } #modelStatus { display:block; margin-top:6px; color:var(--dim); } #modelStatus a { color:var(--steer); } .model-controls p { color:var(--dim); margin-bottom:0; } .k-ai { color:#5a4bd6; text-decoration:underline dotted; text-underline-offset:4px; } .mark .ai-label { color:#5a4bd6; }
 </style>
 </head>
 <body>
 <div id="app">
   <header class="top">
-    <div class="brand">Brightwell Mutual <span>· incident statement</span></div>
+    <div class="brand">Brightwell Mutual <span>· Incident statement</span></div>
     <div class="lede">A breach notice that writes itself from the logs. Turn up spin and watch it drift away from the evidence.</div>
     <div class="draft">draft <b id="draftNo">v1</b></div>
     <div class="stamp" id="stamp">approved by legal</div>
   </header>
 
   <section class="lab" aria-label="Spin laboratory">
-    <div><span class="eyebrow">01 / Spin laboratory · fictional incident</span><h1>Same breach. Different story.</h1><p>Turn up the spin. The evidence stays put.</p></div>
+    <div><span class="eyebrow">01 / Spin laboratory · fictional incident</span><h1>Same breach. <span class="spun">Different story.</span></h1><p>Turn up the spin. The evidence stays put.</p></div>
     <div class="lab-control"><label for="heroSpin">SPIN <b id="spinLabel">candid</b></label><input id="heroSpin" type="range" min="0" max="3" step="1" value="0"><div class="ends"><span>candid</span><span>very seriously</span></div></div>
-    <div class="lab-copy"><span class="eyebrow">What happened</span><p>Our VPN had no MFA. 41.2 GB left the network.</p><span class="eyebrow">How we’re saying it</span><p id="spinPreview"></p></div>
+    <div class="redline" id="redline">
+      <div class="rl-head"><span>Statement draft · tracked changes</span><span id="rlMeta">no edits</span></div>
+      <div class="rl-row rl-del"><span class="rl-g" aria-hidden="true">−</span><span class="rl-k">What happened</span><p>Our VPN had no MFA. 41.2 GB left the network.</p></div>
+      <div class="rl-row rl-ins"><span class="rl-g" aria-hidden="true">+</span><span class="rl-k">How we’re saying it</span><p><span id="spinPreview"></span></p></div>
+    </div>
   </section>
   <main class="stage" id="stage">
     <section class="rail" aria-label="Evidence">
@@ -225,8 +250,8 @@
 
   <footer class="bar">
     <div class="ctl">
-      <button class="btn" id="play" type="button">pause</button>
-      <button class="btn" id="redraft" type="button">redraft</button><button class="btn" id="saveDraft" type="button">save branch</button><select id="branches" aria-label="Restore saved branch"><option value="">saved branches</option></select>
+      <button class="btn primary" id="play" type="button">pause</button>
+      <button class="btn" id="redraft" type="button">redraft</button><button class="btn" id="saveDraft" type="button">save branch</button><select id="branches" aria-label="Restore saved branch"><option value="">Saved branches</option></select>
     </div>
     <input id="scrub" type="range" min="0" max="1" value="0" step="1" aria-label="Timeline: drag back to rewrite from there">
     <div class="tm" id="tm"></div>
@@ -755,7 +780,10 @@
       'A limited amount of information may have been accessed. We are strengthening our security posture.',
       'Our robust controls encountered an exceptional situation. Your security remains our highest priority.'
     ][level];
+    $('#redline').classList.toggle('edited', level > 0);
+    $('#rlMeta').textContent = level ? `${level} revision${level > 1 ? 's' : ''} · comms + legal` : 'no edits';
   }
+
   $('#heroSpin').addEventListener('input', () => {
     settings.spin = Number($('#heroSpin').value) / 3;
     drawDial('spin'); replan(false);
