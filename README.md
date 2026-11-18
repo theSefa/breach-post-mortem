@@ -4,7 +4,7 @@
 
 **▶ Try it: [thesefa.github.io/breach-post-mortem](https://thesefa.github.io/breach-post-mortem/)** (best on a desktop, works on a phone)
 
-![The spin laboratory at candid: "Same breach." in black, "Different story." in Redaction type, and the statement draft showing no edits yet](docs/hero.png)
+![The spin laboratory in local Mistral mode: "Same breach." in black, "Different story." on a lime band, the statement draft showing one revision, and the steering dials set to measured spin, a nation-state attacker and the intern to blame](docs/hero.png)
 
 ![The statement at maximum spin: claims stamped CONTRADICTED, rose threads running back to the log lines they contradict](docs/preview.png)
 
