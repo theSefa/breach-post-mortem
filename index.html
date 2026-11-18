@@ -30,8 +30,10 @@
     --dim: #6c6b66;
     --faint: #c9c7bf;
     --thread: #4a4a4a;
-    --steer: #ff6b1a;
-    --alert: #e8364f;
+    --steer: #4a7300;
+    --lime: #d4f01e;
+    --alert: #c23a72;
+    --alert-soft: #f7c6da;
     --mono: 'Space Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     --label: 'Poppins', system-ui, sans-serif;
     color-scheme: light;
@@ -91,13 +93,13 @@
   .w.ghost { color: var(--faint); }
   .k-sup { text-decoration: underline dotted var(--dim); text-underline-offset: 4px; }
   .k-uns { text-decoration: underline dashed var(--alert); text-underline-offset: 4px; }
-  .k-con { color: var(--alert); text-decoration: underline solid var(--alert); text-underline-offset: 4px; }
+  .k-con { color: var(--fg); background: linear-gradient(transparent 58%, var(--alert-soft) 58%); -webkit-box-decoration-break: clone; box-decoration-break: clone; text-decoration: underline solid var(--alert); text-underline-offset: 4px; }
   .ghost .k-sup, .ghost .k-uns, .ghost .k-con { text-decoration: none; color: inherit; }
   .ret { display: inline-block; width: 1px; height: 1px; vertical-align: middle; margin-left: 6px; }
   .mark { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-family: var(--label); font-weight: 600; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; min-width: 0; }
   .mark em { font-style: normal; color: var(--alert); }
   .tag { color: var(--steer); white-space: nowrap; letter-spacing: .04em; text-transform: none; font-family: var(--mono); font-size: 10.5px; }
-  .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--steer); margin-right: 5px; vertical-align: 1px; }
+  .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 1px var(--steer); margin-right: 5px; vertical-align: 1px; }
 
   /* threads */
   #threads { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
@@ -122,7 +124,7 @@
   .dial .track { fill: none; stroke: var(--faint); stroke-width: 1.5; }
   .dial .fill { fill: none; stroke: var(--steer); stroke-width: 2.5; }
   .dial .tick { stroke: var(--dim); stroke-width: 1; }
-  .dial .bead { fill: var(--steer); }
+  .dial .bead { fill: var(--lime); stroke: var(--fg); stroke-width: 1.5; }
   .dial .end { font-family: var(--mono); font-size: 10px; fill: var(--dim); }
   .dial .out { font-family: var(--label); font-size: 13px; color: var(--dim); margin-top: 2px; font-variant-numeric: tabular-nums; }
   .dial .out b { color: var(--fg); font-weight: 600; }
@@ -136,7 +138,7 @@
   .btn { all: unset; cursor: pointer; border: 1px solid var(--faint); border-radius: 999px; padding: 5px 14px; font-family: var(--label); font-weight: 600; letter-spacing: .01em; font-size: 12px; color: var(--fg); }
   .btn::first-letter { text-transform: uppercase; }
   .btn { display: inline-block; }
-  .btn.primary { background: var(--fg); border-color: var(--fg); color: var(--bg); }
+  .btn.primary { background: var(--lime); border-color: var(--fg); color: var(--fg); }
   .btn.primary:hover { border-color: var(--fg); }
   .btn:hover { border-color: var(--dim); }
   .btn:focus-visible { outline: 1px solid var(--steer); }
@@ -174,7 +176,7 @@
   .lab { padding: 40px 0 32px; display:grid; grid-template-columns: 1fr 300px; gap: 22px 48px; border-bottom:1px solid var(--rule); }
   .lab > div { min-width:0; }
   .lab h1 { margin:14px 0 12px; font:600 clamp(40px, 6.4vw, 84px)/.98 var(--label); letter-spacing:-.035em; }
-  .lab h1 .spun { display:block; font-family:'Redaction 50', Georgia, serif; font-weight:400; letter-spacing:-.01em; color:var(--steer); }
+  .lab h1 .spun { display:block; font-family:'Redaction 50', Georgia, serif; font-weight:400; letter-spacing:-.01em; color:var(--fg); width:fit-content; padding:0 .12em; background:linear-gradient(transparent 14%, var(--lime) 14%, var(--lime) 92%, transparent 92%); -webkit-box-decoration-break:clone; box-decoration-break:clone; }
   .lab p { margin:8px 0; color:var(--dim); font-family:var(--label); font-size:15px; }
   .eyebrow { font-family:var(--mono); font-size:11px; color:var(--steer); text-transform:uppercase; letter-spacing:.1em; }
   .lab-control { align-self:center; } .lab-control label { display:flex; justify-content:space-between; font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
@@ -193,7 +195,7 @@
   .redline.edited .rl-del p { text-decoration:line-through; text-decoration-color:var(--alert); text-decoration-thickness:1.5px; }
   .redline .rl-ins p { min-height:28px; font-size:19px; font-weight:500; letter-spacing:-.01em; color:var(--fg); }
   .redline.edited .rl-ins .rl-g { color:var(--steer); }
-  .redline.edited #spinPreview { background:linear-gradient(transparent 62%, rgba(255,107,26,.28) 62%); -webkit-box-decoration-break:clone; box-decoration-break:clone; }
+  .redline.edited #spinPreview { background:linear-gradient(transparent 62%, var(--lime) 62%); -webkit-box-decoration-break:clone; box-decoration-break:clone; }
   .dials-wrap { position:sticky; top:0; z-index:3; background:var(--bg); margin:0 0 20px; padding:12px 0; border-top:0; border-bottom:1px solid var(--rule); }
   .dials { gap:12px; grid-template-columns:repeat(4,minmax(0,1fr)); } .dial .out { font-size:10px; }
   .report-tools { display:flex; gap:12px; justify-content:space-between; align-items:center; margin:16px 0; color:var(--dim); font-family:var(--label); font-size:12px; }
@@ -201,7 +203,7 @@
   .pin-notice { border-color:var(--steer); color:var(--steer); font-size:12px; }
   .inspector { font-family:var(--label); } .inspector .btn { float:right; } .claim-source { padding:8px 0; color:var(--dim); font-size:11px; border-top:1px solid var(--rule); }
   .comparison { max-height:260px; overflow:auto; } .k-mis { color:var(--steer); text-decoration:underline wavy; text-underline-offset:4px; }
-  [data-claim] { cursor:pointer; } [data-claim]:hover { background:rgba(255,107,26,.12); }
+  [data-claim] { cursor:pointer; } [data-claim]:hover { background:rgba(212,240,30,.35); }
   .ghost .k-mis { color:inherit; text-decoration:none; } .mark .misleading { color:var(--steer); }
   .ln { grid-template-columns:20px 30px minmax(0,1fr) 90px; gap:8px; } .bars i { width:4px; }
   .rail h2 span { color:var(--dim); } .doc { padding-bottom:40px; }
