@@ -47,3 +47,7 @@ After seeing the dot headline live, Sefa asked for a cleaner look and chose from
 - Accent orange `#ff6b1a`; contradicted moves to crimson `#e8364f` so the two never read as one signal.
 - The "What happened / How we're saying it" box becomes a tracked-changes redline: truth on a − line (struck through once spin > 0), spin on a + line with an orange marker, header counting revisions. Replaces the left accent strip.
 - Pill buttons, Pause filled as the primary action.
+
+## Revision 2 (same day): lime and rose
+- Accent moves from orange to lime `#d4f01e`, used as fills (headline highlighter band, spin highlight, primary button, dial beads). Lime is too pale for text on the light background, so text and lines use olive `#4a7300` (`--steer`).
+- Contradicted moves from crimson to dusty rose: `#c23a72` for threads, labels and underlines (`--alert`), plus a soft `#f7c6da` highlight behind contradicted phrases (`--alert-soft`), which now render in body text colour. Periwinkle was rejected because Mistral claims are already purple.

@@ -4,15 +4,15 @@
 
 **▶ Try it: [thesefa.github.io/breach-post-mortem](https://thesefa.github.io/breach-post-mortem/)** (best on a desktop, works on a phone)
 
-![The spin laboratory at candid: "Same breach." in black, "Different story." in orange pixel type, and the statement draft showing no edits yet](docs/hero.png)
+![The spin laboratory at candid: "Same breach." in black, "Different story." in Redaction type, and the statement draft showing no edits yet](docs/hero.png)
 
-![The statement at maximum spin: claims stamped CONTRADICTED, red threads running back to the log lines they contradict](docs/preview.png)
+![The statement at maximum spin: claims stamped CONTRADICTED, rose threads running back to the log lines they contradict](docs/preview.png)
 
 Every breach notice says the company "takes your security very seriously." This one shows its working. As the statement writes itself, every claim is wired to the log lines that back it up, or to the ones that contradict it.
 
 - **Grey thread:** the claim is supported by evidence.
-- **Red thread:** the evidence says otherwise. The claim is stamped CONTRADICTED.
-- **Dangling red ╳:** nothing backs the claim at all. It's stamped UNSUPPORTED.
+- **Rose thread:** the evidence says otherwise. The claim is stamped CONTRADICTED.
+- **Dangling rose ╳:** nothing backs the claim at all. It's stamped UNSUPPORTED.
 
 ## Updated interaction
 
