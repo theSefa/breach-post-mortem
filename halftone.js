@@ -18,10 +18,11 @@
     return stops[i] + (stops[i + 1] - stops[i]) * (l - i);
   }
   const DROPOUT = [0, .12, .28, .45];
-  const ACCENT = [0, .06, .14, .24];
+  const ACCENT = [0, .08, .2, .35];
   const INK = 0.04;   // below this a cell is paper, not ink
 
-  function dotField({ cols, rows, cell, coverage, accentFrom = Infinity }, level, seed = 1) {
+  // accentFrom: {col, row} — cells right of col on rows at or below row can turn accent; null for none.
+  function dotField({ cols, rows, cell, coverage, accentFrom = null }, level, seed = 1) {
     const drop = lerpStops(DROPOUT, level), accent = lerpStops(ACCENT, level);
     const shrink = 1 - 0.12 * level, wobble = cell * 0.35 * level / 3;
     const dots = [];
@@ -33,7 +34,7 @@
         const r = cell / 2 * Math.sqrt(Math.min(1, c)) * shrink;
         const x = (col + .5) * cell + (noise(i, seed + 101) - .5) * 2 * wobble;
         const y = (row + .5) * cell + (noise(i, seed + 202) - .5) * 2 * wobble;
-        dots.push({ x, y, r, accent: col >= accentFrom && noise(i, seed + 303) < accent });
+        dots.push({ x, y, r, accent: !!accentFrom && col >= accentFrom.col && row >= accentFrom.row && noise(i, seed + 303) < accent });
       }
     }
     return dots;

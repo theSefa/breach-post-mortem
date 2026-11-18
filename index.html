@@ -15,7 +15,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Condensed:wght@500;600&family=Montserrat:wght@900&family=JetBrains+Mono:wght@400;500;700&display=swap">
 <style>
   /* Layout: an instrument panel. Evidence rail on the left, the statement in the middle,
      four steering arcs under it, a telemetry strip pinned to the bottom. One deliberate dark look. */
@@ -166,6 +166,9 @@
 
   .lab { padding: 30px 0; display:grid; grid-template-columns: 1fr 300px; gap: 22px 48px; border-bottom:1px solid var(--rule); }
   h1 { font-family:var(--label); font-size: clamp(28px, 4vw, 46px); line-height:1.1; margin:10px 0; font-weight:500; }
+  .dot-h1 { margin:14px 0 10px; line-height:0; }
+  #headline { display:block; width:100%; }
+  .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
   .lab p { margin:8px 0; color:var(--dim); }
   .eyebrow { font-size:10px; color:var(--steer); text-transform:uppercase; letter-spacing:.12em; }
   .lab-control { align-self:center; } .lab-control label { display:flex; justify-content:space-between; font-size:11px; }
@@ -199,7 +202,7 @@
   </header>
 
   <section class="lab" aria-label="Spin laboratory">
-    <div><span class="eyebrow">01 / Spin laboratory · fictional incident</span><h1>Same breach. Different story.</h1><p>Turn up the spin. The evidence stays put.</p></div>
+    <div><span class="eyebrow">01 / Spin laboratory · fictional incident</span><h1 class="dot-h1"><span class="sr-only">Same breach. Different story.</span><canvas id="headline" aria-hidden="true"></canvas></h1><p>Turn up the spin. The evidence stays put.</p></div>
     <div class="lab-control"><label for="heroSpin">SPIN <b id="spinLabel">candid</b></label><input id="heroSpin" type="range" min="0" max="3" step="1" value="0"><div class="ends"><span>candid</span><span>very seriously</span></div></div>
     <div class="lab-copy"><span class="eyebrow">What happened</span><p>Our VPN had no MFA. 41.2 GB left the network.</p><span class="eyebrow">How we’re saying it</span><p id="spinPreview"></p></div>
   </section>
@@ -236,10 +239,15 @@
 </div>
 
 <script src="engine.js"></script>
+<script src="halftone.js"></script>
 <script>
 (() => {
   'use strict';
   const E = window.BreachEngine;
+  // Halftone headline state (used by updateLab during start-up, so declared first).
+  const HEADLINE = 'Same breach. Different story.';
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const head = { grid: null, shown: 0, target: 0, raf: 0 };
   const $ = (s) => document.querySelector(s);
   const esc = (s) => s.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
 
@@ -755,7 +763,84 @@
       'A limited amount of information may have been accessed. We are strengthening our security posture.',
       'Our robust controls encountered an exceptional situation. Your security remains our highest priority.'
     ][level];
+    setHeadline(settings.spin * 3);
   }
+
+  // ---------- halftone headline ----------
+  // The headline is drawn in Montserrat Black on a hidden canvas, measured cell by cell, and
+  // redrawn as dots. Spin thins and scatters them (halftone.js). Redraws only on spin, resize
+  // and font load; the real text stays in the <h1> for screen readers.
+  function layoutHeadline() {
+    const cv = $('#headline'), w = Math.floor(cv.parentElement.clientWidth);
+    if (!w) return;
+    const size = Math.round(Math.max(34, Math.min(64, innerWidth * 0.054)));
+    // Phones: small letters, so finer dots and a gentler breakdown keep max spin readable.
+    const narrow = innerWidth < 560, cell = narrow ? 3 : 5;
+    const font = `900 ${size}px Montserrat, 'Arial Black', sans-serif`;
+    const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+    ctx.font = font;
+    const lines = [];
+    for (const word of HEADLINE.split(' ')) {
+      const next = lines.length ? `${lines[lines.length - 1]} ${word}` : word;
+      if (!lines.length) lines.push(word);
+      else if (ctx.measureText(next).width > w) lines.push(word);
+      else lines[lines.length - 1] = next;
+    }
+    const lh = Math.round(size * 1.08), h = Math.ceil((lh * lines.length + size * 0.12) / cell) * cell;
+    const W = Math.floor(w / cell) * cell;
+    ctx.canvas.width = W; ctx.canvas.height = h;
+    ctx.font = font; ctx.fillStyle = '#000';
+    let accentFrom = null;
+    lines.forEach((line, k) => {
+      const y = k * lh + Math.round(size * 0.92);
+      ctx.fillText(line, 0, y);
+      const at = line.indexOf('Different');
+      if (at >= 0) accentFrom = { col: Math.floor(ctx.measureText(line.slice(0, at)).width / cell), row: Math.floor(k * lh / cell) };
+    });
+    const cols = W / cell, rows = h / cell, px = ctx.getImageData(0, 0, W, h).data;
+    const coverage = new Float32Array(cols * rows);
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      let sum = 0;
+      for (let y = r * cell; y < (r + 1) * cell; y++) for (let x = c * cell; x < (c + 1) * cell; x++) sum += px[(y * W + x) * 4 + 3];
+      coverage[r * cols + c] = sum / (255 * cell * cell);
+    }
+    const dpr = window.devicePixelRatio || 1;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(h * dpr);
+    cv.style.width = `${W}px`; cv.style.height = `${h}px`;
+    head.grid = { cols, rows, cell, coverage, accentFrom, dpr, intensity: narrow ? 0.6 : 1 };
+  }
+  function paintHeadline(level) {
+    const g = head.grid; if (!g) return;
+    const cv = $('#headline'), ctx = cv.getContext('2d'), css = getComputedStyle(document.documentElement);
+    ctx.setTransform(g.dpr, 0, 0, g.dpr, 0, 0);
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    const dots = Halftone.dotField(g, level * g.intensity);
+    for (const accent of [false, true]) {
+      ctx.fillStyle = css.getPropertyValue(accent ? '--steer' : '--fg').trim();
+      ctx.beginPath();
+      for (const d of dots) if (d.accent === accent) { ctx.moveTo(d.x + d.r, d.y); ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2); }
+      ctx.fill();
+    }
+  }
+  function setHeadline(target) {
+    head.target = target;
+    cancelAnimationFrame(head.raf);
+    if (reduceMotion.matches || !head.grid) { head.shown = target; paintHeadline(target); return; }
+    const from = head.shown, t0 = performance.now(), dur = 350;
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - t, 3);
+      head.shown = from + (target - from) * e;
+      paintHeadline(head.shown);
+      if (t < 1) head.raf = requestAnimationFrame(step);
+    };
+    head.raf = requestAnimationFrame(step);
+  }
+  function relayoutHeadline() { layoutHeadline(); paintHeadline(head.shown); }
+  let headResize = 0;
+  addEventListener('resize', () => { cancelAnimationFrame(headResize); headResize = requestAnimationFrame(relayoutHeadline); });
+  relayoutHeadline();
+  document.fonts.load("900 48px Montserrat").then(relayoutHeadline, () => {});
+  document.fonts.ready.then(relayoutHeadline);
   $('#heroSpin').addEventListener('input', () => {
     settings.spin = Number($('#heroSpin').value) / 3;
     drawDial('spin'); replan(false);

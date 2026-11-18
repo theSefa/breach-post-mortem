@@ -3,10 +3,10 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { dotField } = require('./halftone');
 
-const full = (cols, rows) => ({ cols, rows, cell: 5, coverage: new Float32Array(cols * rows).fill(1), accentFrom: Infinity });
+const full = (cols, rows) => ({ cols, rows, cell: 5, coverage: new Float32Array(cols * rows).fill(1), accentFrom: null });
 
 test('level 0 draws every inked cell, bigger dots for more ink', () => {
-  const dots = dotField({ cols: 4, rows: 1, cell: 5, coverage: Float32Array.from([0, .2, .6, 1]), accentFrom: Infinity }, 0);
+  const dots = dotField({ cols: 4, rows: 1, cell: 5, coverage: Float32Array.from([0, .2, .6, 1]), accentFrom: null }, 0);
   assert.equal(dots.length, 3);
   assert.ok(dots[0].r < dots[1].r && dots[1].r < dots[2].r);
   assert.ok(Math.max(...dots.map(d => d.r)) <= 2.5);
@@ -30,13 +30,14 @@ test('jitter keeps every dot within a cell of its home', () => {
 });
 
 test('accent dots grow with spin and stay in their region', () => {
-  const g = { ...full(40, 10), accentFrom: 20 };
+  // Region starts at column 20, row 4: on one line that is "Different story.", wrapped it is line two.
+  const g = { ...full(40, 10), accentFrom: { col: 20, row: 4 } };
   const count = l => dotField(g, l).filter(d => d.accent).length;
   assert.equal(count(0), 0);
   assert.ok(count(3) > count(1), `${count(1)} -> ${count(3)}`);
-  for (const d of dotField(g, 3)) if (d.accent) assert.ok(d.x >= 20 * g.cell);
+  for (const d of dotField(g, 3)) if (d.accent) assert.ok(d.x >= 20 * g.cell - g.cell && d.y >= 4 * g.cell - g.cell);
 });
 
 test('empty coverage draws nothing', () => {
-  assert.deepEqual(dotField({ cols: 10, rows: 3, cell: 5, coverage: new Float32Array(30), accentFrom: Infinity }, 3), []);
+  assert.deepEqual(dotField({ cols: 10, rows: 3, cell: 5, coverage: new Float32Array(30), accentFrom: null }, 3), []);
 });
