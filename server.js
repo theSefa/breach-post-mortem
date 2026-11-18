@@ -83,9 +83,9 @@ const server = http.createServer(async (req, res) => {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405); return res.end(); }
     const name = decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname);
     // Serve only public application assets, never repository metadata or local files.
-    if (!['/index.html','/engine.js','/halftone.js','/model-client.js'].includes(name) && !/^\/docs\/[a-zA-Z0-9_-]+\.(png|jpg)$/.test(name)) { res.writeHead(404); return res.end(); }
+    if (!['/index.html','/engine.js','/fonts/Redaction_50-Regular.woff2','/model-client.js'].includes(name) && !/^\/docs\/[a-zA-Z0-9_-]+\.(png|jpg)$/.test(name)) { res.writeHead(404); return res.end(); }
     const data = await fs.readFile(path.join(root,name));
-    res.writeHead(200, {'Content-Type':name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.js')?'text/javascript; charset=utf-8':name.endsWith('.png')?'image/png':'image/jpeg','Cache-Control':'no-store'});
+    res.writeHead(200, {'Content-Type':name.endsWith('.html')?'text/html; charset=utf-8':name.endsWith('.js')?'text/javascript; charset=utf-8':name.endsWith('.png')?'image/png':name.endsWith('.woff2')?'font/woff2':'image/jpeg','Cache-Control':'no-store'});
     res.end(req.method === 'HEAD' ? undefined : data);
   } catch { if (!res.destroyed && !res.headersSent) json(503,{error:'Local model unavailable or timed out. Scripted fallback is available.'}); }
 });

@@ -38,3 +38,12 @@ The page works but looks like a generic dark dashboard. Sefa wants it to feel li
 
 ## Left to the builder
 Exact grid maths, noise function, ease timing, and Montserrat weight per element.
+
+## Revision (same day): clean light restyle — supersedes the dot headline
+After seeing the dot headline live, Sefa asked for a cleaner look and chose from a clickable preview:
+- Light theme (off-white `#f3f2ee`, white panels, near-black text).
+- Headline: "Same breach." in Poppins SemiBold; "Different story." in Redaction 50 (MCKL, SIL OFL, bundled in `fonts/` with its licence), orange. Fixed cut, chosen by Sefa. The canvas dots and `halftone.js` are removed.
+- Poppins for prose and UI (brand, buttons, dial values, Mistral box); Space Mono for logs, labels and the statement.
+- Accent orange `#ff6b1a`; contradicted moves to crimson `#e8364f` so the two never read as one signal.
+- The "What happened / How we're saying it" box becomes a tracked-changes redline: truth on a − line (struck through once spin > 0), spin on a + line with an orange marker, header counting revisions. Replaces the left accent strip.
+- Pill buttons, Pause filled as the primary action.
