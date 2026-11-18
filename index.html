@@ -537,13 +537,18 @@
     const r = ret.getBoundingClientRect();
     const x0 = r.left - st.left, y0 = r.top - st.top;
     const stacked = window.matchMedia('(max-width: 860px)').matches;
-    let out = `<path class="hair" d="M0,${y0.toFixed(1)} H${st.width.toFixed(0)}"/><path class="hair" d="M${x0.toFixed(1)},0 V${st.height.toFixed(0)}"/>`;
+    // Stacked (phones): the evidence sits below the statement, so threads run down the left margin
+    // instead of across the text. The horizontal hair carries the eye from the caret to that margin.
+    const gx = -10;
+    let out = stacked
+      ? `<path class="hair" d="M${gx},${y0.toFixed(1)} H${st.width.toFixed(0)}"/>`
+      : `<path class="hair" d="M0,${y0.toFixed(1)} H${st.width.toFixed(0)}"/><path class="hair" d="M${x0.toFixed(1)},0 V${st.height.toFixed(0)}"/>`;
     const to = (id, cls) => {
       const b = evEls[id].btn.getBoundingClientRect();
       let x1, y1, d;
       if (stacked) {
-        x1 = b.left + b.width * 0.5 - st.left; y1 = b.bottom - st.top;
-        d = `M${x0},${y0} C${x0},${y0 - (y0 - y1) * 0.55} ${x1},${y1 + (y0 - y1) * 0.35} ${x1},${y1}`;
+        x1 = b.left - st.left; y1 = b.top + b.height / 2 - st.top;
+        d = `M${gx},${y0} V${y1 - 8} Q${gx},${y1} ${gx + 8},${y1} H${x1}`;
       } else {
         x1 = b.right - st.left; y1 = b.top + b.height / 2 - st.top;
         d = `M${x0},${y0} C${x0 - (x0 - x1) * 0.45},${y0 + 36} ${x1 + (x0 - x1) * 0.35},${y1} ${x1},${y1}`;
@@ -730,7 +735,9 @@
     replan(false);
     $('#modelStatus').textContent = modelEnabled ? 'Local Mistral enabled · preparing next sentence' : 'Scripted mode';
   });
-  fetch('/api/model').then(r => r.ok ? r.json() : Promise.reject()).then(data => {
+  // The model service only exists on the user's own machine; don't ask a static host for it.
+  const localHost = /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$/.test(location.hostname);
+  (localHost ? fetch('/api/model') : Promise.reject()).then(r => r.ok ? r.json() : Promise.reject()).then(data => {
     $('#useModel').disabled = !data.available;
     $('#modelStatus').textContent = data.available ? `${data.model} ready on this device` : 'Mistral is not installed in the local service.';
   }).catch(() => {
