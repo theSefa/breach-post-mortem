@@ -5,7 +5,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node --test engine.test.js server.test.js verifier.test.js",
+    "test": "node --test engine.test.js halftone.test.js server.test.js verifier.test.js",
     "serve": "python3 -m http.server 8765",
     "serve:model": "node server.js",
     "eval:model": "node model-eval.js"
